@@ -15,7 +15,7 @@ def sample_run(sample_name, read1, read2, read_index, index2, out_dir):
         run = Solid2.Solid2(sample_name, read1, read2, read_index, index2, out_dir)
         LOG_FILE = run.out_dir + run.sample_name + '_run_error.log'
         
-        # trim -> align -> deduplicate reads
+        #trim -> align -> deduplicate reads
         trimmed_fqs = CPD_ETR.trim(run.adapter1, run.adapter2, run.read1, run.read2, run.out_dir)
         trimmed_files = trimmed_fqs.split(' ')
         trimmed_fqs = CPD_ETR.trim(run.adapter1, run.adapter2, run.read1, run.read2, run.out_dir)
@@ -45,13 +45,13 @@ def sample_run(sample_name, read1, read2, read_index, index2, out_dir):
         #intersect bam with bed
         intersect_bam = CPD_ETR.intersect(clip_bam, run.amplicon_bed)
         intersect_bam = CPD_ETR.fix(intersect_bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
+
+        #rename 
+        final_bam = CPD_ETR.rename_file(intersect_bam, (run.out_dir + run.sample_name + '.final.bam'))
         CPD_ETR.sort(intersect_bam)                              
         CPD_ETR.index(intersect_bam)
         CPD_ETR.flagstats(intersect_bam)
-        CPD_ETR.depth(intersect_bam, run.out_dir, run.sample_name, run.amplicon_bed)
-        
-        #rename 
-        final_bam = CPD_ETR.rename_file(intersect_bam, (run.sample_name + '.final.bam'))
+        CPD_ETR.depth(intersect_bam, run.out_dir, run.sample_name, run.amplicon_bed)        
          
         # call variants - mapping quality set to 40
         snp_indels_vcf = CPD_ETR.haplotyper(final_bam, run.amplicon_bed)
@@ -64,10 +64,6 @@ def sample_run(sample_name, read1, read2, read_index, index2, out_dir):
         annovar_vcf =CPD_ETR.annovar_table(genotyped_vcf)
         alamut_vcf = CPD_ETR.alamut(genotyped_vcf)
 
-        for filename in glob.glob(out_dir):
-            if final_bam not in filename and "vcf" not in filename and "depth" not in filename and "flagstats" not in filename and 'fastq' not in filename:
-                CPD_ETR.del_file(filename)
-        CPD_ETR.del_directory('/project/cpdlab/Solid2/tmp')
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())

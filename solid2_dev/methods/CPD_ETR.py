@@ -49,7 +49,7 @@ def align(read1, read2, frag_size):
         sample_name = read1.split('.')
         sample_name = sample_name[0]
         LOG_FILE = sample_name + '.align_ERROR.log'
-        out_sam = sample_name + '.' + '.align.sam'
+        out_sam = sample_name + '.' + 'align.sam'
         subprocess.call(Paths.novoalign + ' -d ' + Paths.db_nix + ' -f ' + read1 + ' ' + read2 + ' -i PE ' + frag_size +
         ' -c 32 -o FullNW -o SAM  > '  + out_sam, shell=True)
     except :
@@ -145,7 +145,7 @@ def index(bam):
 def intersect(bam, amplicon_bed):
     try:
         LOG_FILE = bam + '.intersect_ERROR.log'
-        intersect_out = bam.replace('bam', 'intersect_ALL_AMPS.bam')
+        intersect_out = bam.replace('bam', 'intersect.bam')
         subprocess.call(Paths.bedtools + 'intersectBed -abam ' + bam + ' -b ' + amplicon_bed + ' > ' + intersect_out, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
@@ -215,11 +215,10 @@ def clip(bam):
 def depth(bam, out_dir, sample_name, amplicon_bed):
     try:
         LOG_FILE = bam + '.depth_ERROR.log'
-        depth_out = out_dir + sample_name
+        depth_out = out_dir + sample_name 
         subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK +
         ' -T DepthOfCoverage -K ' + Paths.GATKkey + ' -et NO_ET -I ' + bam + ' -o ' + depth_out +
         '.depth --minBaseQuality 22 -baseCounts -ct 0 -ct 1 -ct 250 -ct 1000 -L ' + amplicon_bed + ' -R ' + Paths.db_fa, shell=True)
-        check_empty(depth_out)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -619,7 +618,7 @@ def alamut(vcf_in):
     try:
         LOG_FILE = vcf_in + '.alamut_ERROR.log'
         vcf_out = vcf_in.replace( 'vcf', 'alamut.vcf')
-        subprocess.call(Paths.alamut + ' --in ' + vcf_in + ' --ann ' + vcf_out  + ' --unann ' + vcf_out + 'unann', shell=True)
+        subprocess.call(Paths.alamut + ' --in ' + vcf_in + ' --ann ' + vcf_out  + ' --unann ' + vcf_out + '.unann', shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())

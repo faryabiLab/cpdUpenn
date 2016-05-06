@@ -37,7 +37,8 @@ FilterAlignScore = '/project/cpdlab/Scripts/PipelineV2.1.1_hpc/FilterAlignScore.
 ## Databases
 # hg19
 db_nix = '/project/cpdlab/Databases/genomes/hg19_genome.nix'
-db_fa = '/project/cpdlab/Databases/genomes/hg19_genome.fa'
+#db_fa = '/project/cpdlab/Databases/genomes/hg19_genome.fa'
+db_fa = '/project/cpdlab/ashkan/muTect/ucsc.hg19.fasta'
 db_snp = '/project/cpdlab/Databases/dbsnp/hg19_dbsnp137_correct.vcf'
 db_cosmic ='/home/bigdelia/b37_cosmic_v54_120711.vcf'
 db_alamut='/project/cpdlab/Databases/Alalmut/hg19.alalmut'
