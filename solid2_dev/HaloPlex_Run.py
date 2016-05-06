@@ -48,10 +48,10 @@ def sample_run(sample_name, read1, read2, read_index, index2, out_dir):
 
         #rename 
         final_bam = CPD_ETR.rename_file(intersect_bam, (run.out_dir + run.sample_name + '.final.bam'))
-        CPD_ETR.sort(intersect_bam)                              
-        CPD_ETR.index(intersect_bam)
-        CPD_ETR.flagstats(intersect_bam)
-        CPD_ETR.depth(intersect_bam, run.out_dir, run.sample_name, run.amplicon_bed)        
+        CPD_ETR.sort(final_bam)                              
+        CPD_ETR.index(final_bam)
+        CPD_ETR.flagstats(final_bam)
+        CPD_ETR.depth(final_bam, run.out_dir, run.sample_name, run.amplicon_bed)        
          
         # call variants - mapping quality set to 40
         snp_indels_vcf = CPD_ETR.haplotyper(final_bam, run.amplicon_bed)
