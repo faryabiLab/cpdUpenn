@@ -16,7 +16,7 @@ picard ='/project/cpdlab/Tools/picard/1.46/'
 bedtools = '/project/cpdlab/Tools/bedtools/2.25.0/bin/'
 # GATK
 GATK = '/project/cpdlab/Tools/GATK/3.4-46/GenomeAnalysisTK.jar'
-GATK2 = '/home/bigdelia/GATK_3.5/GenomeAnalysisTK.jar'
+GATK2 = '/home/bigdelia/GenomeAnalysisTK.jar'
 GATKkey='/project/cpdlab/Tools/GATK/3.4-46/CPD_upenn_gatk.key'
 # VCF Tools
 vcftools = '/project/cpdlab/Tools/vcftools/0.1.14/src/cpp/vcftools'
