@@ -512,7 +512,7 @@ def mutect2(bam, amplicon_bed):
     try:
         LOG_FILE = bam + '.mutect2_ERROR.log'
         vcf_out = bam.replace('bam', 'mutect.vcf')
-        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK3_5 + ' -R ' + Paths.db_fa +
+        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK2 + ' -R ' + Paths.db_fa +
         ' -K ' + Paths.GATKkey + ' -T MuTect2 -I:tumor ' + bam + ' --dbsnp ' + Paths.db_snp + ' --cosmic ' + Paths.db_cosmic +
         ' --artifact_detection_mode -L ' + amplicon_bed  + ' -o ' + vcf_out, shell=True)
     except:

@@ -33,38 +33,39 @@ def sample_run(sample_name, read1, read2, read_index, index2, out_dir):
         #recoded_bam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV150986-35_ucsc19/CPDV150986-35.align.consensus.fix.reordered.fix_misencode.NCTTEST.bam'
         #CPD_ETR.index(recoded_bam)
         #intervals = CPD_ETR.intervals(recoded_bam, run.amplicon_bed, run.sample_name, run.out_dir)
-        realigned_bam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV150986-35_ucsc19/CPDV150986-35.align.consensus.fix.reordered.fix_misencode.realigned.bam' #CPD_ETR.realigner(recoded_bam, run.amplicon_bed, intervals)
-        CPD_ETR.index(realigned_bam)
-        recal_report = CPD_ETR.recal(realigned_bam, run.amplicon_bed)
-        recal_bam = CPD_ETR.print_recal(realigned_bam, run.amplicon_bed, recal_report)
+        #realigned_bam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV150986-35_ucsc19/CPDV150986-35.align.consensus.fix.reordered.fix_misencode.realigned.bam' #CPD_ETR.realigner(recoded_bam, run.amplicon_bed, intervals)
+        #CPD_ETR.index(realigned_bam)
+        #recal_report = CPD_ETR.recal(realigned_bam, run.amplicon_bed)
+        #recal_bam = CPD_ETR.print_recal(realigned_bam, run.amplicon_bed, recal_report)
         #CPD_ETR.index(recal_bam)
          
         #soft clip bam
-        clip_bam = CPD_ETR.clip(recal_bam) 
-        CPD_ETR.index(clip_bam)
-        CPD_ETR.flagstats(clip_bam)
+        #clip_bam = CPD_ETR.clip(recal_bam) 
+        #CPD_ETR.index(clip_bam)
+        #CPD_ETR.flagstats(clip_bam)
 
         #intersect bam with bed
-        intersect_bam = CPD_ETR.intersect(clip_bam, run.amplicon_bed)
-        intersect_bam = CPD_ETR.fix(intersect_bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
+        #intersect_bam = CPD_ETR.intersect(clip_bam, run.amplicon_bed)
+        #intersect_bam = CPD_ETR.fix(intersect_bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
 
         #rename 
-        final_bam = CPD_ETR.rename_file(intersect_bam, (run.out_dir + run.sample_name + '.final.bam'))
-        CPD_ETR.sort(final_bam)                              
-        CPD_ETR.index(final_bam)
-        CPD_ETR.flagstats(final_bam)
-        CPD_ETR.depth(final_bam, run.out_dir, run.sample_name, run.amplicon_bed)        
-         
+        #final_bam = CPD_ETR.rename_file(intersect_bam, (run.out_dir + run.sample_name + '.final.bam'))
+        #CPD_ETR.sort(final_bam)                              
+        #CPD_ETR.index(final_bam)
+        #CPD_ETR.flagstats(final_bam)
+        #CPD_ETR.depth(final_bam, run.out_dir, run.sample_name, run.amplicon_bed)        
+        final_bam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV150986-35_ucsc19/CPDV150986-35.final.bam'
+        mutect_vcf = CPD_ETR.mutect2(final_bam, run.amplicon_bed)
         # call variants - mapping quality set to 40
         #snp_indels_vcf = CPD_ETR.haplotyper(final_bam, run.amplicon_bed)
-        #filtered_vcf = CPD_ETR.filter_vcf(snp_indels_vcf)
+        filtered_vcf = CPD_ETR.filter_vcf(mutect_vcf)
         #genotyped_vcf = CPD_ETR.genotyper(filtered_vcf)
 
         #perform annotations
-        #snp_vcf = CPD_ETR.snpeff(genotyped_vcf)
-        #snp_sift_vcf = CPD_ETR.snpsift(snp_vcf)
-        #annovar_vcf =CPD_ETR.annovar_table(genotyped_vcf)
-        #alamut_vcf = CPD_ETR.alamut(genotyped_vcf)
+        snp_vcf = CPD_ETR.snpeff(filtered_vcf)
+        snp_sift_vcf = CPD_ETR.snpsift(filtered_vcf)
+        annovar_vcf =CPD_ETR.annovar_table(filtered_vcf)
+        alamut_vcf = CPD_ETR.alamut(filtered_vcf)
 
     except:
         logging.basicConfig(filename=LOG_FILE)
