@@ -398,7 +398,7 @@ def realigner(bam, amplicon_bed, intervals):
         LOG_FILE = bam + '.realigner_ERROR.log'
         bam_out = bam .replace('bam', 'realigned.bam')
         subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
-        ' -T IndelRealigner -I ' + bam + ' -targetIntervals ' + intervals + ' -o ' + bam_out + ' -L '+ amplicon_bed, shell=True)
+        ' -nct 24 -T IndelRealigner -I ' + bam + ' -targetIntervals ' + intervals + ' -o ' + bam_out + ' -L '+ amplicon_bed, shell=True)
         check_empty(bam_out)
     except:
         logging.basicConfig(filename=LOG_FILE)
@@ -431,7 +431,8 @@ def recal(bam, amplicon_bed ):
 # @param1 = bam file
 # @param2 = amplicon bed
 # @param1 = gatk recalibration report
-#
+# 
+# @return = re-encoded bam file
 def print_misencoded(bam, amplicon_bed):
     try:
         LOG_FILE = bam + '.print_misencoded_ERROR.log'
