@@ -47,7 +47,7 @@ db_alamut= '/project/cpdlab/Databases/Alalmut/hg19.alalmut'
 
 #Mills and 1000G indels
 #db_indel ='/project/cpdlab/Databases/indels/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf' this vcf will work with cpd's hg19 version *sigh*
-db_indel = '/project/cpdlab/ashkan/muTect'
+db_indel = '/project/cpdlab/ashkan/muTect/Mills_and_1000G_gold_standard.indels.ucsc.hg19.sites.vcf'
 
 ## Languages
 # Java

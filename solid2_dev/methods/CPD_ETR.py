@@ -416,8 +416,8 @@ def recal(bam, amplicon_bed ):
     try:
         LOG_FILE = bam + '.recal_ERROR.log'
         grp_out = bam .replace('bam', 'recal_report.grp')
-        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK2 + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
-        ' -nct 24 -T BaseRecalibrator -knownSites ' + Paths.db_snp + ' -knownSites ' + Paths.db_indel + ' -L '+ amplicon_bed + 
+        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
+        ' -T BaseRecalibrator -knownSites ' + Paths.db_snp + ' -knownSites ' + Paths.db_indel + ' -L '+ amplicon_bed + 
         ' -I ' + bam + ' -o ' + grp_out, shell=True)
         check_empty(grp_out)
     except:
