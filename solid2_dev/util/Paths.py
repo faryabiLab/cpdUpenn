@@ -35,16 +35,19 @@ alamut = '/project/cpdlab/Tools/alamut/1.4.2/./alamut-batch'
 FilterAlignScore = '/project/cpdlab/Scripts/PipelineV2.1.1_hpc/FilterAlignScore.py'
 
 ## Databases
-# hg19
-db_nix = '/project/cpdlab/Databases/genomes/hg19_genome.nix'
+###previous cpd pipe databses
 #db_fa = '/project/cpdlab/Databases/genomes/hg19_genome.fa'
+#db_nix = '/project/cpdlab/Databases/genomes/hg19_genome.nix'
+#db_snp = '/project/cpdlab/Databases/dbsnp/hg19_dbsnp137_correct.vcf'
+db_nix = '/project/cpdlab/ashkan/muTect/ucsc.hg19.nix'
 db_fa = '/project/cpdlab/ashkan/muTect/ucsc.hg19.fasta'
-db_snp = '/project/cpdlab/Databases/dbsnp/hg19_dbsnp137_correct.vcf'
-db_cosmic ='/home/bigdelia/b37_cosmic_v54_120711.vcf'
-db_alamut='/project/cpdlab/Databases/Alalmut/hg19.alalmut'
+db_snp = '/project/cpdlab/ashkan/muTect/dbsnp_137.hg19.vcf'
+db_cosmic = '/project/cpdlab/ashkan/muTect/cosmic_v67.hg19.vcf'
+db_alamut= '/project/cpdlab/Databases/Alalmut/hg19.alalmut'
 
 #Mills and 1000G indels
-db_indel ='/project/cpdlab/Databases/indels/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf'
+#db_indel ='/project/cpdlab/Databases/indels/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf' this vcf will work with cpd's hg19 version *sigh*
+db_indel = '/project/cpdlab/ashkan/muTect'
 
 ## Languages
 # Java
