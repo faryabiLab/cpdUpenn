@@ -516,6 +516,7 @@ def mutect2(bam, amplicon_bed):
         subprocess.call(Paths.java8 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK2 + ' -R ' + Paths.db_fa +
         ' -K ' + Paths.GATKkey + ' -nct 24 -T MuTect2 -I:tumor ' + bam + ' --dbsnp ' + Paths.db_snp + ' --cosmic ' + Paths.db_cosmic +
         ' --artifact_detection_mode -L ' + amplicon_bed  + ' -o ' + vcf_out, shell=True)
+        #
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
