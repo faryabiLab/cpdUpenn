@@ -486,7 +486,7 @@ def filter_vcf(vcf_in):
         sys.exit
     return vcf_out
 
-# recal_variant recalibrates viriants 
+# recal_variant recalibrates viriants
 #
 #  METHOD INCOMPLETE
 #
@@ -496,14 +496,10 @@ def recal_variant(vcf_in, sample_name, out_dir):
         tranches = out_dir + sample_name +'.tranches'
         recal = out_dir + sample_name + '.recal '
         apply_recal_input = '-tranchesFile ' + tranches + ' -recalFile ' +recal
-        subprocess.call('module load R-3.2.2', shell=True)
-        subprocess.call('echo ive gottent his far ', shell=True)
         subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK2 + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -nct 24 -T VariantRecalibrator -I ' + vcf_in + ' --resource:hapmap,VCF,known=false,training=true,prior=15.0 ' + Paths.db_hapmap, +
         ' --resource:dbsnp,VCF,known=false,training=true,prior=12.0' + Paths.dbsnp + ' -an QD -an ReadPosRankSum -an MQRankSum' +
         ' -recalFile ' + recal + ' -tranchesFile ' + tranches + ' -rscriptFile ' + sample_name + 'recal.Plots.R --maxGaussians 4 -mode BOTH',  shell=True)
-        subprocess.call('echo but not here', shell=True)
-
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
