@@ -490,11 +490,11 @@ def filter_vcf(vcf_in):
 #
 #  METHOD INCOMPLETE
 #
-def recal_variant(vcf_in, sample_name):
+def recal_variant(vcf_in, sample_name, out_dir):
     try:
         LOG_FILE = 'print_recall_error.log'
-        tranches = sample_name +'.tranches'
-        recal = sample_name ='.recal '
+        tranches = out_dir + sample_name +'.tranches'
+        recal = out_dir + sample_name ='.recal '
         apply_recal_input = '-tranchesFile ' + tranches + ' -recalFile ' +recal
         subprocess.call('module load R-3.2.2', shell=True)
         subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
