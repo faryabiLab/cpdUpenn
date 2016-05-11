@@ -498,7 +498,7 @@ def recal_variant(vcf_in, sample_name, out_dir):
         apply_recal_input = '-tranchesFile ' + tranches + ' -recalFile ' +recal
         subprocess.call('module load R-3.2.2', shell=True)
         subprocess.call('echo ive gottent his far ', shell=True)
-        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
+        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK2 + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -nct 24 -T VariantRecalibrator -I ' + vcf_in + ' --resource:hapmap,VCF,known=false,training=true,prior=15.0 ' + Paths.db_hapmap, +
         ' --resource:dbsnp,VCF,known=false,training=true,prior=12.0' + Paths.dbsnp + ' -an QD -an ReadPosRankSum -an MQRankSum' +
         ' -recalFile ' + recal + ' -tranchesFile ' + tranches + ' -rscriptFile ' + sample_name + 'recal.Plots.R',  shell=True)
