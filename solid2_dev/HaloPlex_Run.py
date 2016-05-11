@@ -59,6 +59,7 @@ def sample_run(sample_name, read1, read2, read_index, index2, out_dir):
         # call variants - mapping quality set to 40
         #snp_indels_vcf = CPD_ETR.haplotyper(final_bam, run.amplicon_bed)
         filtered_vcf = CPD_ETR.filter_vcf(mutect_vcf)
+        recal_vcf = CPD_ETR.recal_variant(filtered_vcf)
         #genotyped_vcf = CPD_ETR.genotyper(filtered_vcf)
 
         #perform annotations
