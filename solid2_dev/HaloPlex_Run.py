@@ -64,8 +64,9 @@ def sample_run(sample_name, read1, read2, read_index, index2, out_dir):
 
         #perform annotations
         snp_vcf = CPD_ETR.snpeff(filtered_vcf)
-        snp_sift_vcf = CPD_ETR.snpsift(filtered_vcf)
-        snp_sift_extract = CPD_ETR.snpsift_extract(filtered_vcf)
+        snp_sift_vcf = CPD_ETR.snpsift(snp_vcf)
+        filter_snpsift = CPD_ETR.snpsift_filter(snp_sift_vcf)
+        snp_sift_extract = CPD_ETR.snpsift_extract(filter_snpsift)
         #annovar_vcf =CPD_ETR.annovar_table(filtered_vcf)
         #alamut_vcf = CPD_ETR.alamut(filtered_vcf)
 

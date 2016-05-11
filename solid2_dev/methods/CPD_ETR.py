@@ -580,6 +580,23 @@ def snpsift(vcf_in):
 #
 # @param1 = vcf to be annotated
 #
+# @return = annotated vcf file   
+def snpsift_filter(vcf_in):
+    try:
+        LOG_FILE = vcf_in + '.snpsift_ERROR.log'
+        vcf_out = vcf_in.replace('vcf', 'snpsift_filter.vcf')
+        subprocess.call( 'cat ' + vcf_in + ' | ' + Paths.java7 + ' -jar ' + Paths.snpsift + ' filter "( intron_variant )" > ' + vcf_out, shell=True)
+    except:
+        logging.basicConfig(filename=LOG_FILE)
+        logging.critical(traceback.format_exc())
+        sys.exit
+    return vcf_out
+
+
+# snpeff
+#
+# @param1 = vcf to be annotated
+#
 # @return = annotated vcf file    
 def snpsift_extract(vcf_in):
     try:
