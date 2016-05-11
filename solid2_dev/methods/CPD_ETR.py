@@ -502,6 +502,8 @@ def recal_variant(vcf_in, sample_name, out_dir):
         ' -nct 24 -T VariantRecalibrator -I ' + vcf_in + ' --resource:hapmap,VCF,known=false,training=true,prior=15.0 ' + Paths.db_hapmap, +
         ' --resource:dbsnp,VCF,known=false,training=true,prior=12.0' + Paths.dbsnp + ' -an QD -an ReadPosRankSum -an MQRankSum' +
         ' -recalFile ' + recal + ' -tranchesFile ' + tranches + ' -rscriptFile ' + sample_name + 'recal.Plots.R',  shell=True)
+        subprocess.call('echo but not here', shell=True)
+
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
