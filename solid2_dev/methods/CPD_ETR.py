@@ -8,7 +8,8 @@
 import subprocess, logging, traceback, glob, sys, os
 from util import Paths
 
-
+#global variable of temp directory
+tmp = '/project/cpdlab/tmp'
 # trim - trims adapters from fastq files using trim_galore
 #
 # @param1/2 = adapter sequences to be trimmed
@@ -69,7 +70,7 @@ def dedup(aligned_sam, index_file, amplicon_bed):
     try:
         LOG_FILE = aligned_sam + '.dedup_ERROR.log'
         dedup_out = aligned_sam.replace('sam', 'consensus.bam')
-        subprocess.call(Paths.java8 + ' -Xmx24g -jar ' + Paths.MBCdedup + ' -X /project/cpdlab/Solid2/tmp -b ' +
+        subprocess.call(Paths.java8 + ' -Xmx24g -jar ' + Paths.MBCdedup + ' -X ' + tmp + ' -b ' +
         amplicon_bed + ' -o ' + dedup_out + ' ' + aligned_sam + ' ' + index_file, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
@@ -99,7 +100,7 @@ def sam2bam(sam):
 def sort(bam):
     try:
         LOG_FILE = bam + '.sort_ERROR.log'
-        subprocess.call(Paths.novosort + ' -t /project/cpdlab/Solid2/tmp -c 32 ' + bam, shell=True)
+        subprocess.call(Paths.novosort + ' -t ' +tmp + ' -c 32 ' + bam, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -115,7 +116,7 @@ def fix(bam, amplicon_bed, read_index, sample_name, lib_name):
     try:
         LOG_FILE = bam + '.fix_read_ERROR.log'
         fix_out = bam.replace ('bam', 'fix.bam')
-        subprocess.call(Paths.java6 + ' -Xmx24g -jar ' +  Paths.picard + 'AddOrReplaceReadGroups.jar TMP_DIR=/project/cpdlab/Solid2/tmp I=' + bam + ' O=' +
+        subprocess.call(Paths.java6 + ' -Xmx24g -jar ' +  Paths.picard + 'AddOrReplaceReadGroups.jar TMP_DIR=' + tmp + ' I=' + bam + ' O=' +
         fix_out + ' RGID=1 RGLB=' + lib_name  + ' RGPL=Illumina RGPU=' + read_index + ' RGSM=' + sample_name, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
@@ -197,7 +198,7 @@ def clip(bam):
     try:
         LOG_FILE = bam + '.clips_ends_ERROR.log'
         clip_out = bam.replace('bam', 'clip.bam')
-        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar '+ Paths.GATK + ' -T ClipReads -K ' +
+        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar '+ Paths.GATK + ' -T ClipReads -K ' +
         Paths.GATKkey + ' -et NO_ET -I ' + bam + ' -o ' + clip_out + ' -R ' + Paths.db_fa + ' -CR SOFTCLIP_BASES -QT 22', shell=True)
         check_empty(clip_out)
     except:
@@ -216,9 +217,9 @@ def depth(bam, out_dir, sample_name, amplicon_bed):
     try:
         LOG_FILE = bam + '.depth_ERROR.log'
         depth_out = out_dir + sample_name 
-        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK +
+        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK +
         ' -T DepthOfCoverage -K ' + Paths.GATKkey + ' -et NO_ET -I ' + bam + ' -o ' + depth_out +
-        '.depth --minBaseQuality 22 -baseCounts -ct 0 -ct 1 -ct 250 -ct 1000 -L ' + amplicon_bed + ' -R ' + Paths.db_fa, shell=True)
+        '.depth --minBaseQuality 22 -baseCounts -ct 0 -ct 1 -ct 100 -ct 250 -ct 1000 -L ' + amplicon_bed + ' -R ' + Paths.db_fa, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -252,7 +253,7 @@ def haplotyper(bam, amplicon_bed):
     try:
         LOG_FILE = bam + '.discover_ERROR.log'
         vcf_out = bam.replace('bam', 'haplo.vcf')
-        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
+        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
         ' -K ' + Paths.GATKkey + ' -T' + ' HaplotypeCaller -I '+ bam +  ' --dbsnp ' + Paths.db_snp + 
         ' -stand_call_conf 30.0 -stand_emit_conf 10.0 -o ' + vcf_out +
         ' -ERC BP_RESOLUTION --variant_index_type LINEAR --variant_index_parameter 128000 -L ' + amplicon_bed, shell=True)
@@ -272,7 +273,7 @@ def genotyper(vcf_in):
     try:
         LOG_FILE = vcf_in + '.genotyper_ERROR.log'
         vcf_out = vcf_in.replace('vcf', 'geno.vcf')
-        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
+        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
         ' -K ' + Paths.GATKkey + ' -T GenotypeGVCFs --max_alternate_alleles 2 -stand_call_conf 30 -stand_emit_conf 10 --variant ' +
         vcf_in + ' -o ' + vcf_out, shell=True)
         check_empty(vcf_out)
@@ -295,7 +296,7 @@ def uni_discover(bam, amplicon_bed, min_indel_cnt, min_indel_frac ):
     try:
         LOG_FILE = bam + '.discover_ERROR.log'
         vcf_out = bam.replace('bam', 'discover.vcf')
-        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
+        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
         ' -K ' + Paths.GATKkey + ' -et NO_ET -T' + ' UnifiedGenotyper -I '+ bam + ' --dbsnp ' + Paths.db_snp +
         ' -o ' + vcf_out + ' -nct 24 -glm BOTH -mbq 22 -dt NONE -minIndelCnt ' + min_indel_cnt +
         ' -minIndelFrac ' + min_indel_frac + ' -nda -maxAltAlleles 5 -stand_emit_conf 10.0 -L ' + amplicon_bed, shell=True)
@@ -316,7 +317,7 @@ def uni_alleles (bam, amplicon_bed, raw_var_vcf, out_dir ):
     try:
         LOG_FILE = bam + '.genotype_alleles_ERROR.log'
         vcf_out = bam.replace('bam', 'gatk_alleles.vcf')
-        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
+        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -et NO_ET -T UnifiedGenotyper -I ' + bam + ' --dbsnp ' + Paths.db_snp + ' -o ' + vcf_out + ' -nct 24 -glm SNP -mbq 22 -dt NONE -alleles:VCF ' +
         raw_var_vcf + ' -gt_mode GENOTYPE_GIVEN_ALLELES -out_mode EMIT_ALL_SITES -stand_emit_conf 10.0 -L '+ amplicon_bed, shell=True)
         check_empty(vcf_out)
@@ -336,7 +337,7 @@ def vcf_combine(gatk_discover, gatk_alleles):
     try:
         LOG_FILE = gatk_discover + '.gatk_combine_ERROR.log'
         vcf_out = gatk_discover.replace('vcf', 'gatk_combined.vcf')
-        subprocess.call(Paths.java7 +' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
+        subprocess.call(Paths.java7 +' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
         ' -T CombineVariants -K ' + Paths.GATKkey +' -et NO_ET --variant:variant1 ' + gatk_discover + ' --variant:variant2 ' +
         gatk_alleles + ' -genotypeMergeOptions PRIORITIZE -priority variant2,variant1 -o ' + vcf_out, shell=True)
         check_empty(vcf_out)
@@ -356,7 +357,7 @@ def vcf2table (vcf_in, amplicon_bed ):
     try:
         LOG_FILE = vcf_in + '.vcf2table_ERROR.log'
         table_out = vcf_in.replace('vcf', 'variant_table')
-        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
+        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -T VariantsToTable -V ' + vcf_in + ' -AMD -F CHROM -F POS -F ID -F REF -F ALT -F QUAL -F AC -F AF -GF GT -GF AD -GF DP -GF PL  -o ' +
         table_out + ' -L '+ amplicon_bed, shell=True)
         check_empty(table_out)
@@ -377,7 +378,7 @@ def intervals(bam, amplicon_bed,sample_name, out_dir):
     try:
         LOG_FILE = bam + '.intervals_ERROR.log'
         intervals_out = out_dir + sample_name + '.intervals'
-        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
+        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -T RealignerTargetCreator -I ' + bam + ' -o ' + intervals_out + ' -L '+ amplicon_bed, shell=True)
         check_empty(intervals_out)
     except:
@@ -397,7 +398,7 @@ def realigner(bam, amplicon_bed, intervals):
     try:
         LOG_FILE = bam + '.realigner_ERROR.log'
         bam_out = bam .replace('bam', 'realigned.bam')
-        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
+        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -nct 24 -T IndelRealigner -I ' + bam + ' -targetIntervals ' + intervals + ' -o ' + bam_out + ' -L '+ amplicon_bed, shell=True)
         check_empty(bam_out)
     except:
@@ -416,7 +417,7 @@ def recal(bam, amplicon_bed ):
     try:
         LOG_FILE = bam + '.recal_ERROR.log'
         grp_out = bam .replace('bam', 'recal_report.grp')
-        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
+        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -T BaseRecalibrator -knownSites ' + Paths.db_snp + ' -knownSites ' + Paths.db_indel + ' -L '+ amplicon_bed + 
         ' -I ' + bam + ' -o ' + grp_out, shell=True)
         check_empty(grp_out)
@@ -437,7 +438,7 @@ def print_misencoded(bam, amplicon_bed):
     try:
         LOG_FILE = bam + '.print_misencoded_ERROR.log'
         bam_out = bam.replace('bam', 'fix_misencode.bam')
-        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
+        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -nct 24 -T PrintReads -I ' + bam + ' -o ' + bam_out + ' -L '+ amplicon_bed, shell=True)
         check_empty(bam_out)
     except:
@@ -457,7 +458,7 @@ def print_recal(bam, amplicon_bed, recal_report):
     try:
         LOG_FILE = bam + '.print_recall_ERROR.log'
         bam_out = bam.replace('bam', 'recal.bam')
-        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
+        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -nct 24 -T PrintReads -BQSR ' + recal_report + ' -I ' + bam + ' -o ' + bam_out + ' -L '+ amplicon_bed, shell=True)
         check_empty(bam_out)
     except:
@@ -476,7 +477,7 @@ def filter_vcf(vcf_in):
     try:
         LOG_FILE = vcf_in + '.vcf_filter_ERROR.log'
         vcf_out = vcf_in.replace('vcf', 'filtered.vcf')
-        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
+        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -T VariantFiltration -o ' + vcf_out + ' --variant ' + vcf_in + ' --filterExpression "QD < 2.0 || MQ < 40" --filterName "QDandMQ"', shell=True)
         check_empty(vcf_out)
     except:
@@ -494,7 +495,7 @@ def recal_variant(vcf_in):
         LOG_FILE = 'print_recall_error.log'
         vcf_out = vcf_in.replace('vcf', 'recal.vcf')
         subprocess.call('module load R-3.2.2', shell=True)
-        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
+        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -nct 24 -T VariantRecalibrator -I ' + vcf_in + ' --resource:hapmap,VCF,known=false,training=true,prior=15.0 ' + Paths.hapmap, +
         ' --resource:dbsnp,VCF,known=false,training=true,prior=12.0' + Paths.dbsnp,  shell=True)
         check_empty(vcf_out)
@@ -512,8 +513,8 @@ def mutect2(bam, amplicon_bed):
     try:
         LOG_FILE = bam + '.mutect2_ERROR.log'
         vcf_out = bam.replace('bam', 'mutect.vcf')
-        subprocess.call(Paths.java8 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK2 + ' -R ' + Paths.db_fa +
-        ' -K ' + Paths.GATKkey + ' -T MuTect2 -I:tumor ' + bam + ' --dbsnp ' + Paths.db_snp + ' --cosmic ' + Paths.db_cosmic +
+        subprocess.call(Paths.java8 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK2 + ' -R ' + Paths.db_fa +
+        ' -K ' + Paths.GATKkey + ' -nct 24 -T MuTect2 -I:tumor ' + bam + ' --dbsnp ' + Paths.db_snp + ' --cosmic ' + Paths.db_cosmic +
         ' --artifact_detection_mode -L ' + amplicon_bed  + ' -o ' + vcf_out, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
@@ -531,7 +532,7 @@ def allele_depth(bam, vcf_in):
     try:
         LOG_FILE = bam + '.allele_depth_ERROR.log'
         vcf_out = vcf_in.replace('vcf', 'allele_depth.vcf')
-        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=/project/cpdlab/Solid2/tmp -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
+        subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
         ' -K ' + Paths.GATKkey + ' -T VariantAnnotator -I ' + bam + ' -A DepthPerAlleleBySample -V '+ vcf_in + 
         ' -o ' + vcf_out, shell=True)
         check_empty(vcf_out)
