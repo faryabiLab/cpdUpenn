@@ -59,14 +59,14 @@ def sample_run(sample_name, read1, read2, read_index, index2, out_dir):
         # call variants - mapping quality set to 40
         #snp_indels_vcf = CPD_ETR.haplotyper(final_bam, run.amplicon_bed)
         filtered_vcf =  '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV150986-35_ucsc19/CPDV150986-35.final.mutect.filtered.vcf'#CPD_ETR.filter_vcf(mutect_vcf)
-        #recal_vcf = CPD_ETR.recal_variant(filtered_vcf)
+        recal_vcf = CPD_ETR.recal_variant(filtered_vcf)
         #genotyped_vcf = CPD_ETR.genotyper(filtered_vcf)
 
         #perform annotations
-        snp_vcf = CPD_ETR.snpeff(filtered_vcf)
-        snp_sift_vcf = CPD_ETR.snpsift(snp_vcf)
-        filter_snpsift = CPD_ETR.snpsift_filter(snp_sift_vcf)
-        snp_sift_extract = CPD_ETR.snpsift_extract(filter_snpsift)
+        #snp_vcf = CPD_ETR.snpeff(filtered_vcf)
+        #snp_sift_vcf = CPD_ETR.snpsift(snp_vcf)
+        #filter_snpsift = CPD_ETR.snpsift_filter(snp_sift_vcf)
+        #snp_sift_extract = CPD_ETR.snpsift_extract(filter_snpsift)
         #annovar_vcf =CPD_ETR.annovar_table(filtered_vcf)
         #alamut_vcf = CPD_ETR.alamut(filtered_vcf)
 

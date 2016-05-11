@@ -44,6 +44,7 @@ db_fa = '/project/cpdlab/ashkan/muTect/ucsc.hg19.fasta'
 db_snp = '/project/cpdlab/ashkan/muTect/dbsnp_137.hg19.vcf'
 db_cosmic = '/project/cpdlab/ashkan/muTect/cosmic_v67.hg19.vcf'
 db_alamut= '/project/cpdlab/Databases/Alalmut/hg19.alalmut'
+db_hapmap = '/project/cpdlab/ashkan/muTect/1000G_omni2.5.hg19.sites.vcf'
 
 #Mills and 1000G indels
 #db_indel ='/project/cpdlab/Databases/indels/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf' this vcf will work with cpd's hg19 version *sigh*
