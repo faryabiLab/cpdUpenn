@@ -122,7 +122,7 @@ def main():
         
         # login to ftp
         # Omitting ftp.login('USERNAME', 'PASSWORD') will login as anonymous
-        #ftp.login()
+        ftp.login()
     
         # Change directory in ftp to navigate to desired genome
         #ftp.cwd('/vol1/ftp/release/20130502/')
