@@ -83,7 +83,7 @@ def concat_fasta(db_name, download_to):
     # create file list of all files to concatenate
     files_in_path = download_to + '*'
     filenames = glob.glob(files_in_path)
-    db_path = download_to + db_name + '.fasta'
+    db_path = download_to + db_name + '.vcf'
     try:
         #open each and write to single file
         with open( db_path, 'w') as outfile:
@@ -118,17 +118,18 @@ def main():
     
     try:
         # set ftp location
-        ftp = FTP('ftp://ftp.1000genomes.ebi.ac.uk')
+        ftp = FTP('ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/')
         
         # login to ftp
         # Omitting ftp.login('USERNAME', 'PASSWORD') will login as anonymous
-        ftp.login()
+        #ftp.login()
     
         # Change directory in ftp to navigate to desired genome
-        ftp.cwd('/vol1/ftp/release/20130502/')
+        #ftp.cwd('/vol1/ftp/release/20130502/')
     
         # Create a list of the filenames in this location
         filenames = ftp.nlst()
+        print filenames
         
         print "Downloading the latest Reference Genome ...."
         download(filenames, file_id, download_to,ftp)
@@ -140,7 +141,7 @@ def main():
     unzip(download_to)
     
     # remove all compressed files
-    remove('*.gz', download_to)
+    #remove('*.gz', download_to)
     
     # concate files and remove once concatenated
     print "Concatinating files..."
