@@ -118,14 +118,14 @@ def main():
     
     try:
         # set ftp location
-        ftp = FTP('ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/')
+        ftp = FTP('ftp-trace.ncbi.nih.gov')
         
         # login to ftp
         # Omitting ftp.login('USERNAME', 'PASSWORD') will login as anonymous
         ftp.login()
     
         # Change directory in ftp to navigate to desired genome
-        ftp.cwd('/release/20130502/')
+        ftp.cwd('/1000genomes/release/20130502/')
     
         # Create a list of the filenames in this location
         filenames = ftp.nlst()
