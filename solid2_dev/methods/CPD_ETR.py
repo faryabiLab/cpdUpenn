@@ -399,7 +399,7 @@ def realigner(bam, amplicon_bed, intervals):
         LOG_FILE = bam + '.realigner_ERROR.log'
         bam_out = bam .replace('bam', 'realigned.bam')
         subprocess.call(Paths.java7 + ' -Xmx24g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
-        ' -nct 24 -T IndelRealigner -I ' + bam + ' -targetIntervals ' + intervals + ' -o ' + bam_out + ' -L '+ amplicon_bed, shell=True)
+        ' -T IndelRealigner -I ' + bam + ' -targetIntervals ' + intervals + ' -o ' + bam_out + ' -L '+ amplicon_bed, shell=True)
         check_empty(bam_out)
     except:
         logging.basicConfig(filename=LOG_FILE)
