@@ -8,7 +8,7 @@ class Solid2(object):
 
     adapter1='AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'
     adapter2='AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT'
-    amplicon_bed='/project/cpdlab/cpdUpenn/solid2_dev/bed_files/39795-1430234657_Regions.bed'
+    amplicon_bed='/project/cpdlab/cpdUpenn/solid2_dev/bed_files/39795-1430234657_Covered.bed'
     frag_size='190,50'
     min_indel_cnt = '9'
     min_indel_frac = '0.10'
