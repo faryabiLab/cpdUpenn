@@ -114,28 +114,28 @@ def main():
     # type of blast database, i.e 'nucl' = nucleotide
     
     # clear folder of previous entries or databases
-    remove('*', download_to)
+    #remove('*', download_to)
     
-    try:
+   # try:
         # set ftp location
-        ftp = FTP('ftp-trace.ncbi.nih.gov')
+    #    ftp = FTP('ftp-trace.ncbi.nih.gov')
         
         # login to ftp
         # Omitting ftp.login('USERNAME', 'PASSWORD') will login as anonymous
-        ftp.login()
+     #   ftp.login()
     
         # Change directory in ftp to navigate to desired genome
-        ftp.cwd('/1000genomes/release/20130502/')
+      #  ftp.cwd('/1000genomes/release/20130502/')
     
         # Create a list of the filenames in this location
-        filenames = ftp.nlst()
-        print filenames
+       # filenames = ftp.nlst()
+        #print filenames
         
-        print "Downloading the latest Reference Genome ...."
-        download(filenames, file_id, download_to,ftp)
-        ftp.quit()
-    except Exception:
-        print "There has been a download issue, please check status of the ftp."
+        #print "Downloading the latest Reference Genome ...."
+        #download(filenames, file_id, download_to,ftp)
+        #ftp.quit()
+    #except Exception:
+     #   print "There has been a download issue, please check status of the ftp."
     
     print "Unzipping downloads.."
     unzip(download_to)
