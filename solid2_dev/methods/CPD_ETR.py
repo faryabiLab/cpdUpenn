@@ -551,7 +551,7 @@ def allele_depth(bam, vcf_in):
 def uncovered_intervals(bam, depth):
     try:
         LOG_FILE = bam + '.uncovered_intervals_ERROR.log'
-        intervals_out = bam.replace('bam', (depth + '_uncovered_intervals'))
+        intervals_out = bam.replace('bam', (str(depth) + '_uncovered_intervals'))
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
         ' -K ' + Paths.GATKkey + ' -T FindCoveredIntervals -I ' + bam + ' -u -cov ' + depth + ' -o ' + intervals_out, shell=True)
     except:
