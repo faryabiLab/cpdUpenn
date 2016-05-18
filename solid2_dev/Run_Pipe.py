@@ -18,7 +18,7 @@ def demultiplex(run_dir, sample_sheet):
 
 def main():
     run_dir = sys.argv[1]
-    sample_sheet = run_dir + '/data/Intensities/BaseCalls/SampleSheet.csv'
+    sample_sheet = run_dir + '/Data/Intensities/BaseCalls/SampleSheet.csv'
     print sample_sheet
     sample_info = parse_sheet(sample_sheet)
     print 'demultiplexing...'
