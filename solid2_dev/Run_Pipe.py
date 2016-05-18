@@ -7,7 +7,7 @@ def parse_sheet (sample_sheet):
         lines = f.readlines()[1:] #skips headers
         print lines
         for line in lines:
-            sample_parse = line.split('\t')
+            sample_parse = line.split('\,')
             for item in sample_parse:
                 print sample_parse[2]
                 print sample_parse[9]
