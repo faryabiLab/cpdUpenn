@@ -9,8 +9,8 @@ def parse_sheet (sample_sheet):
         for line in lines:
             sample_parse = line.split('\t')
             for item in sample_parse:
-                print item
-                print len(sample_parse)
+                print sample_parse[2]
+                print sample_parse[9]
             #run_args.append(sample_parse[2] +'\t' + sample_parse[4] + '\t' + sample_parse[9])
     return run_args
     
