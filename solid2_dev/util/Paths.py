@@ -36,7 +36,7 @@ FilterAlignScore = '/project/cpdlab/Scripts/PipelineV2.1.1_hpc/FilterAlignScore.
 
 
 #demultiplex
-bcl2 = '/project/cpdlab/Tools/CASAVA_v1.8.2/src/perl/bin/configureBclToFastq.pl'
+bcl2 = '/home/bigdelia/bcl2fastq/src/perl/bin/configureBclToFastq.pl'
 
 
 ## Databases
