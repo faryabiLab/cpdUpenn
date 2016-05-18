@@ -15,8 +15,9 @@ def demultiplex(run_dir, sample_sheet):
                     '/Unaligned --sample-sheet ' + sample_sheet + ' --no-eamss --use-bases-mask Y150n,I8,Y10,Y150n --mismatches 1', shell = True)
 
 def concat_fastq(run_dir):
-    unaligned = run_dir + '/Unaligned/'
-    subprocess.call ('cd ' + unaligned, shell = False )
+    unaligned = run_dir + '/Unaligned'
+    print unaligned
+    subprocess.call ('cd /project/cpdlab/HiSeqRun/151123_SN970_0142_AHMNFTADXX/Unaligned', shell = False )
     subprocess.call("for j in `awk -F "," '{print $3}' ../../SampleSheet.csv | grep -v 'Sample_ID' | sort |uniq` \
                      do \
                          zcat Sample_$j/$j*R1*gz > Sample_$j/$j.R1.fastq \
