@@ -11,7 +11,7 @@ def parse_sheet (sample_sheet):
     return run_args
     
 def demultiplex(run_dir, sample_sheet):
-    subprocess.call(Paths.bcl2 + '--input-dir '+ run_dir + '/Data/Intensities/BaseCalls --output-dir ' + run_dir + 
+    subprocess.call(Paths.bcl2 + ' --input-dir '+ run_dir + '/Data/Intensities/BaseCalls --output-dir ' + run_dir + 
                     ' Unaligned --sample-sheet ' + sample_sheet + ' --no-eamss --use-bases-mask Y150n,I8,Y10,Y150n --mismatches 1', shell = True)
 
 # concat fasta
