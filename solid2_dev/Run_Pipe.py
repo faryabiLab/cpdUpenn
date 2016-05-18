@@ -5,13 +5,9 @@ def parse_sheet (sample_sheet):
     run_args = []
     with open(sample_sheet, 'r') as f:
         lines = f.readlines()[1:] #skips headers
-        print lines
         for line in lines:
             sample_parse = line.split(',')
-            for item in sample_parse:
-                print sample_parse[2]
-                print sample_parse[9]
-            #run_args.append(sample_parse[2] +'\t' + sample_parse[4] + '\t' + sample_parse[9])
+            run_args.append(sample_parse[2] +',' + sample_parse[4] + ',' + sample_parse[9])
     return run_args
     
 def demultiplex(run_dir, sample_sheet):
