@@ -26,3 +26,4 @@ def main():
     for item in sample_info:
         print item
     
+main()
