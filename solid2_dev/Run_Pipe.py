@@ -1,7 +1,7 @@
 import csv,sys,subprocess
 from util import Paths
 
-def parse_sheet (sample_sheet, out_dir):    
+def parse_sheet (sample_sheet):    
     run_args = []
     with open(sample_sheet, 'r') as f:
         lines = f.readlines()[1:] #skips headers
