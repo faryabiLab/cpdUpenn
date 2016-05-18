@@ -7,8 +7,10 @@ def parse_sheet (sample_sheet):
         lines = f.readlines()[1:] #skips headers
         for line in lines:
             sample_parse = line.split('\t')
-            if len(sample_parse) < 0:
-                run_args.append(sample_parse[2] +'\t' + sample_parse[4] + '\t' + sample_parse[9])
+            for item in sample_parse:
+                print item
+                print len(sample_parse)
+            #run_args.append(sample_parse[2] +'\t' + sample_parse[4] + '\t' + sample_parse[9])
     return run_args
     
 def demultiplex(run_dir, sample_sheet):
