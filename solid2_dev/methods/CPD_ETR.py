@@ -200,7 +200,6 @@ def clip(bam):
         clip_out = bam.replace('bam', 'clip.bam')
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar '+ Paths.GATK + ' -T ClipReads -K ' +
         Paths.GATKkey + ' -et NO_ET -I ' + bam + ' -o ' + clip_out + ' -R ' + Paths.db_fa + ' -CR SOFTCLIP_BASES -QT 22', shell=True)
-        check_empty(clip_out)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -257,7 +256,6 @@ def haplotyper(bam, amplicon_bed):
         ' -K ' + Paths.GATKkey + ' -T' + ' HaplotypeCaller -I '+ bam +  ' --dbsnp ' + Paths.db_snp + 
         ' -stand_call_conf 30.0 -stand_emit_conf 10.0 -o ' + vcf_out +
         ' -ERC BP_RESOLUTION --variant_index_type LINEAR --variant_index_parameter 128000 -L ' + amplicon_bed, shell=True)
-        check_empty(vcf_out)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -276,7 +274,6 @@ def genotyper(vcf_in):
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
         ' -K ' + Paths.GATKkey + ' -T GenotypeGVCFs --max_alternate_alleles 2 -stand_call_conf 30 -stand_emit_conf 10 --variant ' +
         vcf_in + ' -o ' + vcf_out, shell=True)
-        check_empty(vcf_out)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -300,7 +297,6 @@ def uni_discover(bam, amplicon_bed, min_indel_cnt, min_indel_frac ):
         ' -K ' + Paths.GATKkey + ' -et NO_ET -T' + ' UnifiedGenotyper -I '+ bam + ' --dbsnp ' + Paths.db_snp +
         ' -o ' + vcf_out + ' -nct 32 -glm BOTH -mbq 22 -dt NONE -minIndelCnt ' + min_indel_cnt +
         ' -minIndelFrac ' + min_indel_frac + ' -nda -maxAltAlleles 5 -stand_emit_conf 10.0 -L ' + amplicon_bed, shell=True)
-        check_empty(vcf_out)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -320,7 +316,6 @@ def uni_alleles (bam, amplicon_bed, raw_var_vcf, out_dir ):
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -et NO_ET -T UnifiedGenotyper -I ' + bam + ' --dbsnp ' + Paths.db_snp + ' -o ' + vcf_out + ' -nct 32 -glm SNP -mbq 22 -dt NONE -alleles:VCF ' +
         raw_var_vcf + ' -gt_mode GENOTYPE_GIVEN_ALLELES -out_mode EMIT_ALL_SITES -stand_emit_conf 10.0 -L '+ amplicon_bed, shell=True)
-        check_empty(vcf_out)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -340,7 +335,6 @@ def vcf_combine(gatk_discover, gatk_alleles):
         subprocess.call(Paths.java7 +' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
         ' -T CombineVariants -K ' + Paths.GATKkey +' -et NO_ET --variant:variant1 ' + gatk_discover + ' --variant:variant2 ' +
         gatk_alleles + ' -genotypeMergeOptions PRIORITIZE -priority variant2,variant1 -o ' + vcf_out, shell=True)
-        check_empty(vcf_out)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -360,7 +354,6 @@ def vcf2table (vcf_in, amplicon_bed ):
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -T VariantsToTable -V ' + vcf_in + ' -AMD -F CHROM -F POS -F ID -F REF -F ALT -F QUAL -F AC -F AF -GF GT -GF AD -GF DP -GF PL  -o ' +
         table_out + ' -L '+ amplicon_bed, shell=True)
-        check_empty(table_out)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -380,7 +373,6 @@ def intervals(bam, amplicon_bed,sample_name, out_dir):
         intervals_out = out_dir + sample_name + '.intervals'
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -T RealignerTargetCreator -I ' + bam + ' -o ' + intervals_out + ' -L '+ amplicon_bed, shell=True)
-        check_empty(intervals_out)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -400,7 +392,6 @@ def realigner(bam, amplicon_bed, intervals):
         bam_out = bam .replace('bam', 'realigned.bam')
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -T IndelRealigner -I ' + bam + ' -targetIntervals ' + intervals + ' -o ' + bam_out + ' -L '+ amplicon_bed, shell=True)
-        check_empty(bam_out)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -420,7 +411,6 @@ def recal(bam, amplicon_bed ):
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -T BaseRecalibrator -knownSites ' + Paths.db_snp + ' -knownSites ' + Paths.db_indel + ' -L '+ amplicon_bed + 
         ' -I ' + bam + ' -o ' + grp_out, shell=True)
-        check_empty(grp_out)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -440,7 +430,6 @@ def print_misencoded(bam, amplicon_bed):
         bam_out = bam.replace('bam', 'fix_misencode.bam')
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -nct 32 -T PrintReads -I ' + bam + ' -o ' + bam_out + ' -L '+ amplicon_bed, shell=True)
-        check_empty(bam_out)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -460,7 +449,6 @@ def print_recal(bam, amplicon_bed, recal_report):
         bam_out = bam.replace('bam', 'recal.bam')
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -nct 32 -T PrintReads -BQSR ' + recal_report + ' -I ' + bam + ' -o ' + bam_out + ' -L '+ amplicon_bed, shell=True)
-        check_empty(bam_out)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -479,7 +467,6 @@ def filter_vcf(vcf_in):
         vcf_out = vcf_in.replace('vcf', 'filtered.vcf')
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -T VariantFiltration -o ' + vcf_out + ' --variant ' + vcf_in + ' --filterExpression "MQ < 40" --filterName "QDandMQ"', shell=True)
-        check_empty(vcf_out)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -553,7 +540,7 @@ def uncovered_intervals(bam, depth):
         LOG_FILE = bam + '.uncovered_intervals_ERROR.log'
         intervals_out = bam.replace('bam', (str(depth) + '_uncovered_intervals'))
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
-        ' -K ' + Paths.GATKkey + ' -T FindCoveredIntervals -I ' + bam + ' -u -cov ' + depth + ' -o ' + intervals_out, shell=True)
+        ' -K ' + Paths.GATKkey + ' -T FindCoveredIntervals -I ' + bam + ' -u -cov ' + str(depth) + ' -o ' + intervals_out, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())

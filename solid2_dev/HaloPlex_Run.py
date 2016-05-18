@@ -60,7 +60,7 @@ def sample_run(sample_name, read1, read2, read_index, index2, out_dir):
         CPD_ETR.depth(final_bam, run.out_dir, run.sample_name, run.target_bed)        
 
         uncovered_100x= CPD_ETR.uncovered_intervals(final_bam, 100)
-        uncovered_250x= CPD_ETR.uncovered_intervals(final_bam, 100)
+        uncovered_250x= CPD_ETR.uncovered_intervals(final_bam, 250)
         #call variants mutect2 and annotate
         mutect_vcf = CPD_ETR.mutect2(final_bam, run.target_bed)
         filtered_vcf =  CPD_ETR.filter_vcf(mutect_vcf)

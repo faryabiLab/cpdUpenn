@@ -34,6 +34,11 @@ alamut = '/project/cpdlab/Tools/alamut/1.4.2/./alamut-batch'
 ## CPD Scripts
 FilterAlignScore = '/project/cpdlab/Scripts/PipelineV2.1.1_hpc/FilterAlignScore.py'
 
+
+#demultiplex
+bcl2 = '/project/cpdlab/Tools/bcl2fastq/bcl2fastq/src/perl/bin/configureBclToFastq.pl'
+
+
 ## Databases
 ###previous cpd pipe databses
 #db_fa = '/project/cpdlab/Databases/genomes/hg19_genome.fa'
