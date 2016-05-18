@@ -15,15 +15,15 @@ def demultiplex(run_dir, sample_sheet):
                     '/Unaligned --sample-sheet ' + sample_sheet + ' --no-eamss --use-bases-mask Y150n,I8,Y10,Y150n --mismatches 1', shell = True)
 
 def concat_fastq(run_dir):
-    unaligned = run_dir + '/Data/Intensities/BaseCalls/Unaligned'
-    subprocess.call ('cd ' + unaligned, shell = True )
+    unaligned = run_dir + '/Data/Intensities/BaseCalls/Unaligned/'
+    subprocess.call ('cd ' + unaligned, shell = False )
     subprocess.call("for j in `awk -F "," '{print $3}' ../../SampleSheet.csv | grep -v 'Sample_ID' | sort |uniq` \
                      do \
                          zcat Sample_$j/$j*R1*gz > Sample_$j/$j.R1.fastq \
                          zcat Sample_$j/$j*R2*gz > Sample_$j/$j.R2.fastq \
                          zcat Sample_$j/$j*R3*gz > Sample_$j/$j.R3.fastq \
                          gzip Sample_$j/*fastq \
-                     done", shell = True)
+                     done", shell = False)
 # concat fasta
 #
 # @param1 = filenames: all files to be concatenated.
