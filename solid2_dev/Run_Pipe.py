@@ -6,7 +6,7 @@ def parse_sheet (sample_sheet):
     with open(sample_sheet, 'r') as f:
         lines = f.readlines()[1:] #skips headers
         for line in lines:
-            sample_parse = line.split['\t']
+            sample_parse = line.split('\t')
             run_args.append(sample_parse[2] +'\t' + sample_parse[4] + '\t' + sample_parse[9])
     return run_args
     
