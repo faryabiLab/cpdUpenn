@@ -11,7 +11,7 @@ def parse_sheet (sample_sheet):
     return run_args
     
 def demultiplex(run_dir, sample_sheet):
-    subprocess.call('module load bcl2fastq2-v02.14.01.07', shell = True)
+    subprocess.call('module load bcl2fastq2-v2.17.1.14', shell = True)
     subprocess.call('bcl2fastq --input-dir '+ run_dir + '/Data/Intensities/BaseCalls --output-dir ' + run_dir + 
                     ' Unaligned --sample-sheet ' + sample_sheet + ' --no-eamss --use-bases-mask Y150n,I8,Y10,Y150n --mismatches 1', shell = True)
 
