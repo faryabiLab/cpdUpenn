@@ -55,10 +55,10 @@ def sample_run(sample_name, read1, read2, read_index, index2, out_dir):
         #rename 
         final_bam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV150986-35_ucsc19/CPDV150986-35.final.VAR_TEST.bam'#CPD_ETR.rename_file(clip_bam, (run.out_dir + run.sample_name + '.final.bam'))
         
-        CPD_ETR.sort(final_bam)                              
-        CPD_ETR.index(final_bam)
-        CPD_ETR.flagstats(final_bam)
-        mpile_vcf = CPD_ETR.mpileup(final_bam, run.amplicon_bed) 
+        #CPD_ETR.sort(final_bam)                              
+        #CPD_ETR.index(final_bam)
+        #CPD_ETR.flagstats(final_bam)
+        mpile_vcf = CPD_ETR.mpile(final_bam, run.amplicon_bed) 
         #CPD_ETR.depth(final_bam, run.out_dir, run.sample_name, run.target_bed)        
 
         #uncovered_100x= CPD_ETR.uncovered_intervals(final_bam, 100)
