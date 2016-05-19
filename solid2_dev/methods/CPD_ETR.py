@@ -233,9 +233,9 @@ def depth(bam, out_dir, sample_name, amplicon_bed):
 def mpile (bam, amplicon_bed):
     try:
         LOG_FILE = bam + '.mpile_ERROR.log'
-        vcf_out = bam.replace('bam', 'piled.vcf')
+        vcf_out = bam.replace('bam', 'piled')
         subprocess.call(Paths.samtools + ' mpileup -uf ' + Paths.db_fa + ' ' + bam + ' -l' + amplicon_bed +
-        ' --VCF -u -t DP -ABQ0 -d 1000000 >' + vcf_out, shell=True)
+        ' -t DP -ABQ0 -d 1000000 >' + vcf_out, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
