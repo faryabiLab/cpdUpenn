@@ -54,7 +54,11 @@ def sample_run(sample_name, read1, read2, read_index, index2, out_dir):
         
         #rename 
         final_bam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV150986-35_ucsc19/CPDV150986-35.final.VAR_TEST.bam'#CPD_ETR.rename_file(clip_bam, (run.out_dir + run.sample_name + '.final.bam'))
-        CPD_ETR.coverage(final_bam, run.amplicon_bed)
+        #CPD_ETR.coverage(final_bam, run.amplicon_bed)
+        mpile = CPD_ETR.mpile(final_bam, run.amplicon_bed) 
+        freebayes_vcf = CPD_ETR.freebayes(final_bam)
+        varscan2_snp = CPD_ETR.varscan2_SNP(mpile)
+        varscan2_INDEL = CPD_ETR.varscan2_INDEL(mpile)
         #CPD_ETR.sort(final_bam)                              
         #CPD_ETR.index(final_bam)
         #CPD_ETR.flagstats(final_bam)
@@ -71,7 +75,7 @@ def sample_run(sample_name, read1, read2, read_index, index2, out_dir):
         #snp_vcf = CPD_ETR.snpeff(filtered_vcf)
         #snp_sift_vcf = CPD_ETR.snpsift(snp_vcf)
         #annovar_vcf =CPD_ETR.annovar_table(filtered_vcf)
-        #alamut_vcf = CPD_ETR.alamut(filtered_vcf)
+        alamut_vcf = CPD_ETR.alamut(freebayes_vcf)
 
 
         #call variants GATK - mapping quality set to 40       

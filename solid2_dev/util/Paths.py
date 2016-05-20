@@ -39,6 +39,10 @@ FilterAlignScore = '/project/cpdlab/Scripts/PipelineV2.1.1_hpc/FilterAlignScore.
 bcl2fastq = '/home/bigdelia/bcl2fastq/src/perl/bin/configureBclToFastq.pl'
 
 
+#variant_callers
+freebayes = '/home/bigdelia/freebayes/bin/freebayes'
+varscan2 ='/home/bigdelia/varscan-master/VarScan.v2.4.1.jar'
+
 ## Databases
 ###previous cpd pipe databses
 #db_fa = '/project/cpdlab/Databases/genomes/hg19_genome.fa'

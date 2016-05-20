@@ -165,8 +165,8 @@ def intersect(bam, amplicon_bed):
 def coverage(bam, amplicon_bed):
     try:
         LOG_FILE = bam + '.coverage_ERROR.log'
-        coverage_out = bam.replace('bam', 'coverage.bam')
-        subprocess.call(Paths.bedtools + 'coverageBed -a ' + bam + ' -b ' + amplicon_bed + ' > ' + coverage_out, shell=True)
+        coverage_out = bam.replace('bam', 'coverage.calc')
+        subprocess.call(Paths.bedtools + 'coverageBed -b ' + bam + ' -a ' + amplicon_bed + ' > ' + coverage_out, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -262,17 +262,7 @@ def mpile (bam, amplicon_bed):
         logging.critical(traceback.format_exc())
         sys.exit
 
-
-def avg_read(fastq):
-    try:
-        LOG_FILE = fastq + '.avg_read_ERROR.log'
-        vcf_out = fastq.replace('bam', 'piled')
-        subprocess.call(Paths.samtools + ' mpileup -f ' + Paths.db_fa + ' ' + bam + ' -l' + amplicon_bed +
-        ' >' + vcf_out, shell=True)
-    except:
-        logging.basicConfig(filename=LOG_FILE)
-        logging.critical(traceback.format_exc())
-        sys.exit    
+ 
 # haplotyper - calls variants with HaploTypeCaller
 #
 # @param1 = bam file to have variants called
@@ -672,7 +662,7 @@ def alamut(vcf_in):
     try:
         LOG_FILE = vcf_in + '.alamut_ERROR.log'
         vcf_out = vcf_in.replace( 'vcf', 'alamut.vcf')
-        subprocess.call(Paths.alamut + ' --in ' + vcf_in + ' --ann ' + vcf_out  + ' --unann ' + vcf_out + '.unann', shell=True)
+        subprocess.call(Paths.alamut + ' --in ' + vcf_in + ' --ann ' + vcf_out  + ' --unann ' + vcf_out + '.unann > alamut.out', shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -702,6 +692,25 @@ def freebayes(bam):
         logging.critical(traceback.format_exc())
         sys.exit
 
+def varscan2_SNP(mpile):
+    try:
+        LOG_FILE = mpile + '.freebayes_Error.log'
+        vcf_out = mpile.replace('piled', + 'varscan2.SNP.vcf')
+        subprocess.call(Paths.varscan2 + ' mpileup2snp ' + mpile +  + ' > ' + vcf_out, shell=True)
+    except:
+        logging.basicConfig(filename=LOG_FILE)
+        logging.critical(traceback.format_exc())
+        sys.exit
+        
+def varscan2_INDEL(mpile):
+    try:
+        LOG_FILE = mpile + '.freebayes_Error.log'
+        vcf_out = mpile.replace('piled', + 'varscan2.INDEL.vcf')
+        subprocess.call(Paths.varscan2 + ' mpileup2indel ' + mpile + ' > ' + vcf_out, shell=True)
+    except:
+        logging.basicConfig(filename=LOG_FILE)
+        logging.critical(traceback.format_exc())
+        sys.exit
 # vcf_af
 #
 #@param1 = VCF for allele frequency calc
