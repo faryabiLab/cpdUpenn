@@ -234,8 +234,8 @@ def mpile (bam, amplicon_bed):
     try:
         LOG_FILE = bam + '.mpile_ERROR.log'
         vcf_out = bam.replace('bam', 'piled')
-        subprocess.call(Paths.samtools + ' mpileup -uf ' + Paths.db_fa + ' ' + bam + ' -l' + amplicon_bed +
-        ' -t DP -ABQ0 -d 1000000 >' + vcf_out, shell=True)
+        subprocess.call(Paths.samtools + ' mpileup -f ' + Paths.db_fa + ' ' + bam + ' -l' + amplicon_bed +
+        ' >' + vcf_out, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -656,6 +656,16 @@ def flagstats(sam_bam):
         LOG_FILE = sam_bam + '.flagstats_ERROR.log'
         stat_out = sam_bam + '.flagstat'
         subprocess.call(Paths.samtools + ' flagstat ' + sam_bam + ' > ' + stat_out, shell=True)
+    except:
+        logging.basicConfig(filename=LOG_FILE)
+        logging.critical(traceback.format_exc())
+        sys.exit
+
+def freebayes(bam):
+    try:
+        LOG_FILE = bam + '.freebayes_Error.log'
+        vcf_out = bam.replace('bam', + 'freebayes.vcf')
+        subprocess.call(Paths.freebayes + ' -f ' + Paths.db_fa + ' ' + bam + ' > ' + vcf_out, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
