@@ -19,7 +19,7 @@ tmp = '/project/cpdlab/tmp'
 def trim(adapt1, adapt2, read1, read2, out_dir):
     try:
         LOG_FILE = out_dir + 'trim_ERROR.log'
-        subprocess.call(Paths.trim_galore + ' -q 20 --phred33 -a ' + adapt1 + ' -a2 ' + adapt2 +
+        subprocess.call(Paths.trim_galore + ' -q 20 --phred33 --fastqc -a ' + adapt1 + ' -a2 ' + adapt2 +
         ' --stringency 3 -e 0.1 --length 20 --paired ' + read1 + ' ' + read2 +  ' -o ' + out_dir + ' --path_to_cutadapt ' + Paths.cut_adapt, shell=True)
 
         out_fqs =''
@@ -154,6 +154,27 @@ def intersect(bam, amplicon_bed):
         sys.exit
     return intersect_out
 
+
+
+# intersect - screens for overlaps in bam files using targets in bed file using bedtools
+#
+# @param1 = bam file that requires intersection
+# @param2 = bed file of amplified regions
+#
+# return = string of bam filename that has been interesected
+def coverage(bam, amplicon_bed):
+    try:
+        LOG_FILE = bam + '.coverage_ERROR.log'
+        coverage_out = bam.replace('bam', 'coverage.bam')
+        subprocess.call(Paths.bedtools + 'coverage -b ' + bam + ' -a ' + amplicon_bed + ' -hist > ' + coverage_out, shell=True)
+    except:
+        logging.basicConfig(filename=LOG_FILE)
+        logging.critical(traceback.format_exc())
+        sys.exit
+    return coverage_out
+    
+    
+    
 # filter40 - filters reads with a mapping quality below 40 using samtools
 #
 # @param1 = bam file to filtered
@@ -242,6 +263,16 @@ def mpile (bam, amplicon_bed):
         sys.exit
 
 
+def avg_read(fastq):
+    try:
+        LOG_FILE = fastq + '.avg_read_ERROR.log'
+        vcf_out = fastq.replace('bam', 'piled')
+        subprocess.call(Paths.samtools + ' mpileup -f ' + Paths.db_fa + ' ' + bam + ' -l' + amplicon_bed +
+        ' >' + vcf_out, shell=True)
+    except:
+        logging.basicConfig(filename=LOG_FILE)
+        logging.critical(traceback.format_exc())
+        sys.exit    
 # haplotyper - calls variants with HaploTypeCaller
 #
 # @param1 = bam file to have variants called
