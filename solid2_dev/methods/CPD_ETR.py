@@ -45,12 +45,12 @@ def trim(adapt1, adapt2, read1, read2, out_dir):
 # @param4 = size of fragments for alignment
 #
 # @return out_sam = string of sam filename
-def align(read1, read2, frag_size):
+def align(read1, read2, frag_size, method):
     try:
         sample_name = read1.split('.')
         sample_name = sample_name[0]
         LOG_FILE = sample_name + '.align_ERROR.log'
-        out_sam = sample_name + '.' + 'align.sam'
+        out_sam = sample_name + '.' + method + 'align.sam'
         subprocess.call(Paths.novoalign + ' -d ' + Paths.db_nix + ' -f ' + read1 + ' ' + read2 + ' -i PE ' + frag_size +
         ' -c 32 -o FullNW -o SAM  > '  + out_sam, shell=True)
     except :
@@ -69,7 +69,7 @@ def align(read1, read2, frag_size):
 def dedup(aligned_sam, index_file, amplicon_bed):
     try:
         LOG_FILE = aligned_sam + '.dedup_ERROR.log'
-        dedup_out = aligned_sam.replace('sam', 'consensus.bam')
+        dedup_out = aligned_sam.replace('sam', '.bam')
         subprocess.call(Paths.java8 + ' -Xmx72g -jar ' + Paths.MBCdedup + ' -X ' + tmp + ' -b ' +
         amplicon_bed + ' -o ' + dedup_out + ' ' + aligned_sam + ' ' + index_file, shell=True)
     except:
@@ -685,7 +685,7 @@ def flagstats(sam_bam):
 def freebayes(bam):
     try:
         LOG_FILE = bam + '.freebayes_Error.log'
-        vcf_out = bam.replace('bam', + 'freebayes.vcf')
+        vcf_out = bam.replace('bam', 'freebayes.vcf')
         subprocess.call(Paths.freebayes + ' -f ' + Paths.db_fa + ' ' + bam + ' > ' + vcf_out, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
