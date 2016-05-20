@@ -9,7 +9,7 @@ from panels import Solid2
 import logging, traceback, sys, glob
 
 
-def sample_run(sample_name, read1, read2, read_index, index2, out_dir, method):
+def sample_run(sample_name, read1, read2, read_index, index2, out_dir):
     try:
         #create solid2 object
         run = Solid2.Solid2(sample_name, read1, read2, read_index, index2, out_dir)
@@ -111,6 +111,6 @@ def main():
     read_index = sys.argv[4]
     index2 = sys.argv[5]
     out_dir = sys.argv[6]
-    sample_run(sample_name, read1, read2, read_index, index2, out_dir, method)
+    sample_run(sample_name, read1, read2, read_index, index2, out_dir)
 
 main()
