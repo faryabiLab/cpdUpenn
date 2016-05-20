@@ -71,7 +71,7 @@ def dedup(aligned_sam, index_file, amplicon_bed):
         LOG_FILE = aligned_sam + '.dedup_ERROR.log'
         dedup_out = aligned_sam.replace('sam', '.bam')
         subprocess.call(Paths.java8 + ' -Xmx72g -jar ' + Paths.MBCdedup + ' -X ' + tmp + ' -b ' +
-        amplicon_bed + ' -o ' + dedup_out + ' ' + aligned_sam + ' ' + index_file, shell=True)
+        amplicon_bed + ' -o ' + dedup_out + ' ' + aligned_sam + ' ' + index_file + ' > dedup_out', shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -694,8 +694,8 @@ def freebayes(bam):
 
 def varscan2_SNP(mpile):
     try:
-        LOG_FILE = mpile + '.freebayes_Error.log'
-        vcf_out = mpile.replace('piled', + 'varscan2.SNP.vcf')
+        LOG_FILE = mpile + '.varscan2_SNP_Error.log'
+        vcf_out = mpile.replace('piled',  'varscan2.SNP.vcf')
         subprocess.call(Paths.varscan2 + ' mpileup2snp ' + mpile +  + ' > ' + vcf_out, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
@@ -704,8 +704,8 @@ def varscan2_SNP(mpile):
         
 def varscan2_INDEL(mpile):
     try:
-        LOG_FILE = mpile + '.freebayes_Error.log'
-        vcf_out = mpile.replace('piled', + 'varscan2.INDEL.vcf')
+        LOG_FILE = mpile + '.varscan2_INDEL.log'
+        vcf_out = mpile.replace('piled', 'varscan2.INDEL.vcf')
         subprocess.call(Paths.varscan2 + ' mpileup2indel ' + mpile + ' > ' + vcf_out, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
