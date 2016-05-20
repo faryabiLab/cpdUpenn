@@ -166,7 +166,7 @@ def coverage(bam, amplicon_bed):
     try:
         LOG_FILE = bam + '.coverage_ERROR.log'
         coverage_out = bam.replace('bam', 'coverage.bam')
-        subprocess.call(Paths.bedtools + 'coverageBed -b ' + bam + ' -a ' + amplicon_bed + ' -hist > ' + coverage_out, shell=True)
+        subprocess.call(Paths.bedtools + 'coverageBed -b ' + bam + ' -a ' + amplicon_bed + ' > ' + coverage_out, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
