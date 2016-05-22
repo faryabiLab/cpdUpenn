@@ -50,7 +50,7 @@ def align(read1, read2, frag_size, method):
         sample_name = read1.split('.')
         sample_name = sample_name[0]
         LOG_FILE = sample_name + '.align_ERROR.log'
-        out_sam = sample_name + '.' + method + 'align.sam'
+        out_sam = sample_name + '.' + method + '.align.sam'
         subprocess.call(Paths.novoalign + ' -d ' + Paths.db_nix + ' -f ' + read1 + ' ' + read2 + ' -i PE ' + frag_size +
         ' -c 32 -o FullNW -o SAM  > '  + out_sam, shell=True)
     except :
@@ -69,7 +69,7 @@ def align(read1, read2, frag_size, method):
 def dedup(aligned_sam, index_file, amplicon_bed):
     try:
         LOG_FILE = aligned_sam + '.dedup_ERROR.log'
-        dedup_out = aligned_sam.replace('sam', '.bam')
+        dedup_out = aligned_sam.replace('sam', 'bam')
         subprocess.call(Paths.java8 + ' -Xmx72g -jar ' + Paths.MBCdedup + ' -X ' + tmp + ' -b ' +
         amplicon_bed + ' -o ' + dedup_out + ' ' + aligned_sam + ' ' + index_file + ' > dedup_out', shell=True)
     except:
@@ -100,7 +100,7 @@ def sam2bam(sam):
 def sort(bam):
     try:
         LOG_FILE = bam + '.sort_ERROR.log'
-        subprocess.call(Paths.novosort + ' -t ' +tmp + ' -c 32 ' + bam, shell=True)
+        subprocess.call(Paths.novosort + ' -t ' +tmp + ' -c 32 ' + bam + ' > sort.out', shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
