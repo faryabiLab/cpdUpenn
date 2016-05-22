@@ -8,13 +8,25 @@ from methods import CPD_ETR
 from panels import Solid2
 import logging, traceback, sys, glob, os
 
-
-def sample_run(sample_name, read1, read2, read_index, index2, out_dir, method):
+def sample_align (run):
+    LOG_FILE = run.out_dir + run.sample_name + '_run_error.log'
     try:
-        #create solid2 object
-        run = Solid2.Solid2(sample_name, read1, read2, read_index, index2, out_dir)
         LOG_FILE = run.out_dir + run.sample_name + '_run_error.log'
-        
+        trimmed_fqs = CPD_ETR.trim(run.adapter1, run.adapter2, run.read1, run.read2, run.out_dir)
+        trimmed_files = trimmed_fqs.split(' ')
+        trimmed_fqs = CPD_ETR.trim(run.adapter1, run.adapter2, run.read1, run.read2, run.out_dir)
+        trim_fq1 = trimmed_files[0]
+        trim_fq2 = trimmed_files[1]
+        aligned_sam = CPD_ETR.align(trim_fq1, trim_fq2, run.frag_size)
+    except:
+        logging.basicConfig(filename=LOG_FILE)
+        logging.critical(traceback.format_exc())
+        sys.exit
+    return aligned_sam
+    
+def sample_run(aligned_sam, run, method):
+    LOG_FILE = run.out_dir + run.sample_name + '_run_error.log'
+    try:        
         #trim -> align -> deduplicate reads
         trimmed_fqs = CPD_ETR.trim(run.adapter1, run.adapter2, run.read1, run.read2, run.out_dir)
         trimmed_files = trimmed_fqs.split(' ')
@@ -84,7 +96,7 @@ def sample_run(sample_name, read1, read2, read_index, index2, out_dir, method):
         varscan2_INDEL = CPD_ETR.varscan2_INDEL(mpile)
 
         
-        files = glob.glob(out_dir)
+        files = glob.glob(run.out_dir)
         for f in files:
             if ("final","flagstat","depth", "profile", "log", "txt") not in f:
                 CPD_ETR.del_file(f)
@@ -102,7 +114,9 @@ def main():
     read_index = sys.argv[4]
     index2 = sys.argv[5]
     out_dir = sys.argv[6]
-    method = sys.argv[7]
-    sample_run(sample_name, read1, read2, read_index, index2, out_dir, method)
+    run = Solid2.Solid2(sample_name, read1, read2, read_index, index2, out_dir)
+    aligned_sam = sample_align(run)
+    sample_run(aligned_sam, run, 'dedup')
+    sample_run(aligned_sam, run, 'allseq')
 
 main()
