@@ -9,7 +9,7 @@ from panels import Solid2
 import logging, traceback, sys, glob, os
 
 def sample_align (run):
-    LOG_FILE = run.out_dir + run.sample_name + '_run_error.log'
+    LOG_FILE = run.out_dir + run.sample_name + '_align_error.log'
     try:
         LOG_FILE = run.out_dir + run.sample_name + '_run_error.log'
         trimmed_fqs = CPD_ETR.trim(run.adapter1, run.adapter2, run.read1, run.read2, run.out_dir)
@@ -27,13 +27,6 @@ def sample_align (run):
 def sample_run(aligned_sam, run, method):
     LOG_FILE = run.out_dir + run.sample_name + '_run_error.log'
     try:        
-        #trim -> align -> deduplicate reads
-        trimmed_fqs = CPD_ETR.trim(run.adapter1, run.adapter2, run.read1, run.read2, run.out_dir)
-        trimmed_files = trimmed_fqs.split(' ')
-        trimmed_fqs = CPD_ETR.trim(run.adapter1, run.adapter2, run.read1, run.read2, run.out_dir)
-        trim_fq1 = trimmed_files[0]
-        trim_fq2 = trimmed_files[1]
-        aligned_sam = CPD_ETR.align(trim_fq1, trim_fq2, run.frag_size, method)
         if (method == 'dedup'):
             bam = CPD_ETR.dedup(aligned_sam, run.index2, run.amplicon_bed)
             bam = CPD_ETR.fix(bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
@@ -46,7 +39,7 @@ def sample_run(aligned_sam, run, method):
             bam = CPD_ETR.index(bam)        
             CPD_ETR.flagstats(bam)
 
-        #inPD_ETR.flagstats(bam)
+        #intersect
         intersect_bam = CPD_ETR.intersect(bam, run.target_bed)
         intersect_bam = CPD_ETR.fix(intersect_bam, run.target_bed, run.index2, run.sample_name, run.lib_name)
         CPD_ETR.sort(intersect_bam)
