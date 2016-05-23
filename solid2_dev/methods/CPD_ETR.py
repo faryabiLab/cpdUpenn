@@ -23,7 +23,7 @@ def trim(adapt1, adapt2, read1, read2, out_dir):
 
         out_fqs =''
         count = 0
-        for filename in glob.glob(out_dir + '*_val_*'):
+        for filename in glob.glob(out_dir + '*.fq.gz'):
             out_fqs = out_fqs + filename +' '
             count += 1
     except:
