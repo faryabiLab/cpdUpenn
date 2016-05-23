@@ -29,6 +29,7 @@ def sample_run(aligned_sam, run, method):
     LOG_FILE = run.out_dir + run.sample_name + '_run_error.log'
     try:        
         if (method == 'dedup'):
+            print 'entered dedup'
             bam = CPD_ETR.dedup(aligned_sam, run.index2, run.amplicon_bed)
             bam = CPD_ETR.fix(bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
             bam = CPD_ETR.index(bam)           
@@ -104,8 +105,8 @@ def main():
     index2 = sys.argv[5]
     out_dir = sys.argv[6]
     run = Solid2.Solid2(sample_name, read1, read2, read_index, index2, out_dir)
-    aligned_sam = sample_align(run)
+    aligned_sam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV141827-50/CPDV141827-50.align.sam'#sample_align(run)
     sample_run(aligned_sam, run, 'dedup')
-    sample_run(aligned_sam, run, 'allseq')
+    #sample_run(aligned_sam, run, 'allseq')
 
 main()

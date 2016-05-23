@@ -668,7 +668,7 @@ def alamut(vcf_in):
         logging.critical(traceback.format_exc())
         sys.exit       
 
-#flagstats - generates statistics for bam files using samtools
+#flagstats - generates statistics for sam/bam files using samtools
 #           does not return, but generates a .flagstats file
 #
 # @param1 = file to be analyzed
