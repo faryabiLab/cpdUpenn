@@ -19,7 +19,7 @@ tmp = '/project/cpdlab/tmp'
 def trim(adapt1, adapt2, read1, read2, out_dir):
     LOG_FILE = out_dir + 'trim_ERROR.log'
     try:
-        subprocess.call(Paths.trim_galore + ' -q 20 --phred33 --fastqc -a ' + adapt1 + ' -a2 ' + adapt2 +
+        subprocess.call(Paths.trim_galore + ' -q 20 --phred33 -a ' + adapt1 + ' -a2 ' + adapt2 +
         ' --stringency 3 -e 0.1 --length 20 --paired ' + read1 + ' ' + read2 +  ' -o ' + out_dir + ' --path_to_cutadapt ' + Paths.cut_adapt, shell=True)
 
         out_fqs =''

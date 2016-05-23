@@ -18,6 +18,7 @@ def sample_align (run):
         trim_fq1 = trimmed_files[0]
         trim_fq2 = trimmed_files[1]
         aligned_sam = CPD_ETR.align(trim_fq1, trim_fq2, run.frag_size)
+        CPD_ETR.flagsts(aligned_sam)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -88,11 +89,6 @@ def sample_run(aligned_sam, run, method):
         varscan2_snp = CPD_ETR.varscan2_SNP(mpile)
         varscan2_INDEL = CPD_ETR.varscan2_INDEL(mpile)
 
-        
-        files = glob.glob(run.out_dir)
-        for f in files:
-            if ("final","flagstat","depth", "profile", "log", "txt") not in f:
-                CPD_ETR.del_file(f)
                 
 
     except:
@@ -111,5 +107,9 @@ def main():
     aligned_sam = sample_align(run)
     sample_run(aligned_sam, run, 'dedup')
     sample_run(aligned_sam, run, 'allseq')
+    files = glob.glob(run.out_dir)
+    for f in files:
+        if ("final","flagstat","depth", "profile", "log", "txt", "sam") not in f:
+            CPD_ETR.del_file(f)
 
 main()
