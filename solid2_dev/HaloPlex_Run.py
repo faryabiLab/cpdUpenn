@@ -111,6 +111,7 @@ def main():
     files = glob.glob(run.out_dir)
     for f in files:
         if ("final","flagstat","depth", "profile", "log", "txt", "sam", "fastq", "properties") not in f:
+            print f
             CPD_ETR.del_file(f)
     
 main()
