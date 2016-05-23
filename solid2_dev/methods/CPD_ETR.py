@@ -17,7 +17,6 @@ tmp = '/project/cpdlab/tmp'
 #
 # @return out_fqs = single string with ' ' seperating filenames
 def trim(adapt1, adapt2, read1, read2, out_dir):
-    LOG_FILE = out_dir + 'trim_ERROR.log'
     try:
         subprocess.call(Paths.trim_galore + ' -q 20 --phred33 -a ' + adapt1 + ' -a2 ' + adapt2 +
         ' --stringency 3 -e 0.1 --length 20 --paired ' + read1 + ' ' + read2 +  ' -o ' + out_dir + ' --path_to_cutadapt ' + Paths.cut_adapt, shell=True)
@@ -27,12 +26,8 @@ def trim(adapt1, adapt2, read1, read2, out_dir):
         for filename in glob.glob(out_dir + '*_val_*'):
             out_fqs = out_fqs + filename +' '
             count += 1
-
-        # Return will be inaccurate if trim_galore has already run in destintation folder.
-        if ( count > 2):
-           raise 'Trim_Galore has already run in this folder!'
-
     except:
+        LOG_FILE = out_dir + 'trim_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -67,12 +62,12 @@ def align(read1, read2, frag_size):
 #
 # return = string of sorted BAM filename containing only unique reads
 def dedup(aligned_sam, index_file, amplicon_bed):
-    LOG_FILE = aligned_sam + '.dedup_ERROR.log'
     try:
         dedup_out = aligned_sam.replace('sam', 'consensus.bam')
         subprocess.call(Paths.java8 + ' -Xmx72g -jar ' + Paths.MBCdedup + ' -X ' + tmp + ' -b ' +
         amplicon_bed + ' -o ' + dedup_out + ' ' + aligned_sam + ' ' + index_file, shell=True)
     except:
+        LOG_FILE = aligned_sam + '.dedup_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -84,11 +79,11 @@ def dedup(aligned_sam, index_file, amplicon_bed):
 #
 # @return = string of bam filename
 def sam2bam(sam):
-    LOG_FILE = sam + '.sam2bam_ERROR.log'
     try:
         bam_out = sam.replace('sam', 'allseq.bam')
         subprocess.call(Paths.samtools + ' view -bS ' + sam + ' > ' + bam_out, shell=True)
     except:
+        LOG_FILE = sam + '.sam2bam_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -98,10 +93,10 @@ def sam2bam(sam):
 #
 # @param1 = bam file that requires sorting
 def sort(bam):
-    LOG_FILE = bam + '.sort_ERROR.log'
     try:
         subprocess.call(Paths.novosort + ' -t ' +tmp + ' -c 32 ' + bam, shell=True)
     except:
+        LOG_FILE = bam + '.sort_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -113,12 +108,12 @@ def sort(bam):
 # @param3 = index sequence of the read group
 # @param4 = name of the sample
 def fix(bam, amplicon_bed, read_index, sample_name, lib_name):
-    LOG_FILE = bam + '.fix_read_ERROR.log'
     try:
         fix_out = bam.replace ('bam', 'fix.bam')
         subprocess.call(Paths.java6 + ' -Xmx72g -jar ' +  Paths.picard + 'AddOrReplaceReadGroups.jar TMP_DIR=' + tmp + ' I=' + bam + ' O=' +
         fix_out + ' RGID=1 RGLB=' + lib_name  + ' RGPL=Illumina RGPU=' + read_index + ' RGSM=' + sample_name, shell=True)
     except:
+        LOG_FILE = bam + '.fix_read_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -129,10 +124,10 @@ def fix(bam, amplicon_bed, read_index, sample_name, lib_name):
 #
 # @param1 = bam file that requires index
 def index(bam):
-    LOG_FILE = bam + '.index_ERROR.log'
     try:
         subprocess.call(Paths.samtools + ' index ' +  bam, shell=True)
     except:
+        LOG_FILE = bam + '.index_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -144,11 +139,11 @@ def index(bam):
 #
 # return = string of bam filename that has been interesected
 def intersect(bam, amplicon_bed):
-    LOG_FILE = bam + '.intersect_ERROR.log'
     try:
         intersect_out = bam.replace('bam', 'intersect.bam')
         subprocess.call(Paths.bedtools + 'intersectBed -abam ' + bam + ' -b ' + amplicon_bed + ' > ' + intersect_out, shell=True)
     except:
+        LOG_FILE = bam + '.intersect_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -163,11 +158,11 @@ def intersect(bam, amplicon_bed):
 #
 # return = string of bam filename that has been interesected
 def coverage(bam, amplicon_bed, desc):
-    LOG_FILE = bam + '.coverage_ERROR.log'
     try:
         coverage_out = bam.replace('bam', (desc +'.coverage.calc'))
         subprocess.call(Paths.bedtools + 'coverageBed -b ' + bam + ' -a ' + amplicon_bed + ' > ' + coverage_out, shell=True)
     except:
+        LOG_FILE = bam + '.coverage_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -181,11 +176,11 @@ def coverage(bam, amplicon_bed, desc):
 #
 # @return = string of bam filename that has been filtered
 def filter40(sam):
-    LOG_FILE = sam + '.filter40_ERROR.log'
     try:
         filter40_out = sam.replace('sam', 'q40.sam')
         subprocess.call(Paths.samtools + ' view -h -q 40 ' + sam + ' > ' + filter40_out, shell=True)
     except:
+        LOG_FILE = sam + '.filter40_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -216,12 +211,12 @@ def filter95(sam):
 #
 # @return = string of bam filename that has been clipped
 def clip(bam):
-    LOG_FILE = bam + '.clips_ends_ERROR.log'
     try:
         clip_out = bam.replace('bam', 'clip.bam')
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar '+ Paths.GATK + ' -T ClipReads -K ' +
         Paths.GATKkey + ' -et NO_ET -I ' + bam + ' -o ' + clip_out + ' -R ' + Paths.db_fa + ' -CR SOFTCLIP_BASES -QT 22', shell=True)
     except:
+        LOG_FILE = bam + '.clips_ends_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -234,13 +229,13 @@ def clip(bam):
 # @param2 = sample name
 # @param3 = bed file of target regions
 def depth(bam, out_dir, sample_name, amplicon_bed, method):
-    LOG_FILE = bam + '.depth_ERROR.log'
     try:
         depth_out = out_dir + sample_name + '.' + method 
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK +
         ' -T DepthOfCoverage -K ' + Paths.GATKkey + ' -et NO_ET -I ' + bam + ' -o ' + depth_out +
         '.depth --minBaseQuality 22 -baseCounts -ct 0 -ct 1 -ct 100 -ct 250 -ct 1000 -L ' + amplicon_bed + ' -R ' + Paths.db_fa, shell=True)
     except:
+        LOG_FILE = bam + '.depth_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -258,6 +253,7 @@ def mpile (bam, amplicon_bed):
         subprocess.call(Paths.samtools + ' mpileup -f ' + Paths.db_fa + ' ' + bam + ' -l' + amplicon_bed +
         ' >' + vcf_out, shell=True)
     except:
+        LOG_FILE = bam + '.mpile_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -270,7 +266,6 @@ def mpile (bam, amplicon_bed):
 #
 # @return = generated vcf file
 def haplotyper(bam, amplicon_bed):
-    LOG_FILE = bam + '.discover_ERROR.log'
     try:
         vcf_out = bam.replace('bam', 'haplo.vcf')
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
@@ -278,6 +273,7 @@ def haplotyper(bam, amplicon_bed):
         ' -stand_call_conf 30.0 -stand_emit_conf 10.0 -o ' + vcf_out +
         ' -ERC BP_RESOLUTION --variant_index_type LINEAR --variant_index_parameter 128000 -L ' + amplicon_bed, shell=True)
     except:
+        LOG_FILE = bam + '.discover_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -289,13 +285,13 @@ def haplotyper(bam, amplicon_bed):
 #
 # @return = genotyped vcf file
 def genotyper(vcf_in):
-    LOG_FILE = vcf_in + '.genotyper_ERROR.log'
     try:
         vcf_out = vcf_in.replace('vcf', 'geno.vcf')
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
         ' -K ' + Paths.GATKkey + ' -T GenotypeGVCFs --max_alternate_alleles 2 -stand_call_conf 30 -stand_emit_conf 10 --variant ' +
         vcf_in + ' -o ' + vcf_out, shell=True)
     except:
+        LOG_FILE = vcf_in + '.genotyper_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -311,7 +307,6 @@ def genotyper(vcf_in):
 #
 # @return = generated vcf file
 def uni_discover(bam, amplicon_bed, min_indel_cnt, min_indel_frac ):
-    LOG_FILE = bam + '.discover_ERROR.log'
     try:
         vcf_out = bam.replace('bam', 'discover.vcf')
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
@@ -319,6 +314,7 @@ def uni_discover(bam, amplicon_bed, min_indel_cnt, min_indel_frac ):
         ' -o ' + vcf_out + ' -nct 32 -glm BOTH -mbq 22 -dt NONE -minIndelCnt ' + min_indel_cnt +
         ' -minIndelFrac ' + min_indel_frac + ' -nda -maxAltAlleles 5 -stand_emit_conf 10.0 -L ' + amplicon_bed, shell=True)
     except:
+        LOG_FILE = bam + '.discover_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -331,13 +327,13 @@ def uni_discover(bam, amplicon_bed, min_indel_cnt, min_indel_frac ):
 #
 # @return = generated vcf file
 def uni_alleles (bam, amplicon_bed, raw_var_vcf, out_dir ):
-    LOG_FILE = bam + '.genotype_alleles_ERROR.log'
     try:
         vcf_out = bam.replace('bam', 'gatk_alleles.vcf')
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -et NO_ET -T UnifiedGenotyper -I ' + bam + ' --dbsnp ' + Paths.db_snp + ' -o ' + vcf_out + ' -nct 32 -glm SNP -mbq 22 -dt NONE -alleles:VCF ' +
         raw_var_vcf + ' -gt_mode GENOTYPE_GIVEN_ALLELES -out_mode EMIT_ALL_SITES -stand_emit_conf 10.0 -L '+ amplicon_bed, shell=True)
     except:
+        LOG_FILE = bam + '.genotype_alleles_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -350,13 +346,13 @@ def uni_alleles (bam, amplicon_bed, raw_var_vcf, out_dir ):
 #
 # @return = combined vcf file
 def vcf_combine(gatk_discover, gatk_alleles):
-    LOG_FILE = gatk_discover + '.gatk_combine_ERROR.log'
     try:
         vcf_out = gatk_discover.replace('vcf', 'gatk_combined.vcf')
         subprocess.call(Paths.java7 +' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
         ' -T CombineVariants -K ' + Paths.GATKkey +' -et NO_ET --variant:variant1 ' + gatk_discover + ' --variant:variant2 ' +
         gatk_alleles + ' -genotypeMergeOptions PRIORITIZE -priority variant2,variant1 -o ' + vcf_out, shell=True)
     except:
+        LOG_FILE = gatk_discover + '.gatk_combine_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -369,13 +365,13 @@ def vcf_combine(gatk_discover, gatk_alleles):
 #
 # @return = vcf in table format with method specified columns
 def vcf2table (vcf_in, amplicon_bed ):
-    LOG_FILE = vcf_in + '.vcf2table_ERROR.log'
     try:
         table_out = vcf_in.replace('vcf', 'variant_table')
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -T VariantsToTable -V ' + vcf_in + ' -AMD -F CHROM -F POS -F ID -F REF -F ALT -F QUAL -F AC -F AF -GF GT -GF AD -GF DP -GF PL  -o ' +
         table_out + ' -L '+ amplicon_bed, shell=True)
     except:
+        LOG_FILE = vcf_in + '.vcf2table_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -389,12 +385,12 @@ def vcf2table (vcf_in, amplicon_bed ):
 #
 # @return = a file with intervals of indels
 def intervals(bam, amplicon_bed,sample_name, out_dir):
-    LOG_FILE = bam + '.intervals_ERROR.log'
     try:
         intervals_out = out_dir + sample_name + '.intervals'
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -T RealignerTargetCreator -I ' + bam + ' -o ' + intervals_out + ' -L '+ amplicon_bed, shell=True)
     except:
+        LOG_FILE = bam + '.intervals_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -408,12 +404,12 @@ def intervals(bam, amplicon_bed,sample_name, out_dir):
 #
 # @return = bam file locally realigned around indels   
 def realigner(bam, amplicon_bed, intervals):
-    LOG_FILE = bam + '.realigner_ERROR.log'
     try:
         bam_out = bam .replace('bam', 'realigned.bam')
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -T IndelRealigner -I ' + bam + ' -targetIntervals ' + intervals + ' -o ' + bam_out + ' -L '+ amplicon_bed, shell=True)
     except:
+        LOG_FILE = bam + '.realigner_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -426,13 +422,13 @@ def realigner(bam, amplicon_bed, intervals):
 #
 # @return = table report of basecalling errors cross ref vs known site vcf's
 def recal(bam, amplicon_bed ):
-    LOG_FILE = bam + '.recal_ERROR.log'
     try:
         grp_out = bam .replace('bam', 'recal_report.grp')
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -T BaseRecalibrator -knownSites ' + Paths.db_snp + ' -knownSites ' + Paths.db_indel + ' -L '+ amplicon_bed + 
         ' -I ' + bam + ' -o ' + grp_out, shell=True)
     except:
+        LOG_FILE = bam + '.recal_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -446,12 +442,12 @@ def recal(bam, amplicon_bed ):
 # 
 # @return = re-encoded bam file
 def print_misencoded(bam, amplicon_bed):
-    LOG_FILE = bam + '.print_misencoded_ERROR.log'
     try:
         bam_out = bam.replace('bam', 'fix_misencode.bam')
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -nct 32 -T PrintReads -I ' + bam + ' -o ' + bam_out + ' -L '+ amplicon_bed, shell=True)
     except:
+        LOG_FILE = bam + '.print_misencoded_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -465,12 +461,12 @@ def print_misencoded(bam, amplicon_bed):
 #
 # @return = recalibrated bam
 def print_recal(bam, amplicon_bed, recal_report):
-    LOG_FILE = bam + '.print_recall_ERROR.log'
     try:
         bam_out = bam.replace('bam', 'recal.bam')
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -nct 32 -T PrintReads -BQSR ' + recal_report + ' -I ' + bam + ' -o ' + bam_out + ' -L '+ amplicon_bed, shell=True)
     except:
+        LOG_FILE = bam + '.print_recall_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -483,12 +479,12 @@ def print_recal(bam, amplicon_bed, recal_report):
 #
 # @return = filterered vcf
 def filter_vcf(vcf_in):
-    LOG_FILE = vcf_in + '.vcf_filter_ERROR.log'
     try:
         vcf_out = vcf_in.replace('vcf', 'filtered.vcf')
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa + ' -K ' + Paths.GATKkey +
         ' -T VariantFiltration -o ' + vcf_out + ' --variant ' + vcf_in + ' --filterExpression "MQ < 40" --filterName "QDandMQ"', shell=True)
     except:
+        LOG_FILE = vcf_in + '.vcf_filter_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -499,7 +495,6 @@ def filter_vcf(vcf_in):
 #  METHOD INCOMPLETE
 #
 def recal_variant(vcf_in, sample_name, out_dir):
-    LOG_FILE = 'print_recall_error.log'
     try:
         tranches = out_dir + sample_name +'.tranches'
         recal = out_dir + sample_name + '.recal '
@@ -509,6 +504,7 @@ def recal_variant(vcf_in, sample_name, out_dir):
         ' --resource:dbsnp,VCF,known=false,training=true,prior=12.0' + Paths.dbsnp + ' -an QD -an ReadPosRankSum -an MQRankSum' +
         ' -recalFile ' + recal + ' -tranchesFile ' + tranches + ' -rscriptFile ' + sample_name + 'recal.Plots.R --maxGaussians 4 -mode BOTH',  shell=True)
     except:
+        LOG_FILE = 'print_recall_error.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -519,13 +515,13 @@ def recal_variant(vcf_in, sample_name, out_dir):
 #  METHOD INCOMPLETE - CALL WORKS, REF & COSMIC VCF DO NOT MATCH
 #   
 def mutect2(bam, amplicon_bed):
-    LOG_FILE = bam + '.mutect2_ERROR.log'
     try:
         vcf_out = bam.replace('bam', 'mutect.vcf')
         subprocess.call(Paths.java8 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK2 + ' -R ' + Paths.db_fa +
         ' -K ' + Paths.GATKkey + ' -nct 32 -T MuTect2 -I:tumor ' + bam + ' --dbsnp ' + Paths.db_snp + ' --cosmic ' + Paths.db_cosmic +
         ' --artifact_detection_mode -stand_call_conf 30.0 -stand_emit_conf 10.0 -mbq 22 -L ' + amplicon_bed  + ' -o ' + vcf_out, shell=True)
     except:
+        LOG_FILE = bam + '.mutect2_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -538,13 +534,13 @@ def mutect2(bam, amplicon_bed):
 # 
 # @return -vcf file that shows allele freq based upon population  
 def allele_depth(bam, vcf_in):
-    LOG_FILE = bam + '.allele_depth_ERROR.log'
     try:
         vcf_out = vcf_in.replace('vcf', 'allele_depth.vcf')
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
         ' -K ' + Paths.GATKkey + ' -T VariantAnnotator -I ' + bam + ' -A DepthPerAlleleBySample -V '+ vcf_in + 
         ' -o ' + vcf_out, shell=True)
     except:
+        LOG_FILE = bam + '.allele_depth_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -557,12 +553,12 @@ def allele_depth(bam, vcf_in):
 # 
 # @return -vcf file that shows allele freq based upon population  
 def uncovered_intervals(bam, depth):
-    LOG_FILE = bam + '.uncovered_intervals_ERROR.log'
     try:
         intervals_out = bam.replace('bam', (str(depth) + '_uncovered_intervals'))
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK + ' -R ' + Paths.db_fa +
         ' -K ' + Paths.GATKkey + ' -T FindCoveredIntervals -I ' + bam + ' -u -cov ' + str(depth) + ' -o ' + intervals_out, shell=True)
     except:
+        LOG_FILE = bam + '.uncovered_intervals_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -573,12 +569,12 @@ def uncovered_intervals(bam, depth):
 #
 # @return = annotated vcf file
 def snpeff(vcf_in):
-    LOG_FILE = vcf_in + '.snpeff_ERROR.log'
     try:
         vcf_out = vcf_in.replace('vcf', 'snpeff.vcf')
         subprocess.call(Paths.java7 + ' -jar ' + Paths.snpeff + ' -c ' + Paths.snpeff_conf + ' hg19 -i vcf -o vcf -noStats ' + vcf_in + 
         ' > ' + vcf_out, shell=True)
     except:
+        LOG_FILE = vcf_in + '.snpeff_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -590,11 +586,11 @@ def snpeff(vcf_in):
 #
 # @return = annotated vcf file   
 def snpsift(vcf_in):
-    LOG_FILE = vcf_in + '.snpsift_ERROR.log'
     try:
         vcf_out = vcf_in.replace('vcf', 'snpsift.vcf')
         subprocess.call(Paths.java7 + ' -jar ' + Paths.snpsift + ' varType ' + vcf_in + ' > ' + vcf_out, shell=True)
     except:
+        LOG_FILE = vcf_in + '.snpsift_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -606,11 +602,11 @@ def snpsift(vcf_in):
 #
 # @return = annotated vcf file   
 def snpsift_filter(vcf_in):
-    LOG_FILE = vcf_in + '.snpsift_ERROR.log'
     try:
         vcf_out = vcf_in.replace('vcf', 'snpsift_filter.vcf')
         subprocess.call( 'cat ' + vcf_in + ' | ' + Paths.java7 + ' -jar ' + Paths.snpsift + ' filter "( intron_variant )" > ' + vcf_out, shell=True)
     except:
+        LOG_FILE = vcf_in + '.snpsift_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -623,12 +619,12 @@ def snpsift_filter(vcf_in):
 #
 # @return = annotated vcf file    
 def snpsift_extract(vcf_in):
-    LOG_FILE = vcf_in + '.snpsift_ERROR.log'
     try:
         vcf_out = vcf_in.replace('vcf', 'extract.vcf')
         subprocess.call(Paths.java7 + ' -jar ' + Paths.snpsift + ' extractFields ' + vcf_in +
         ' CHROM POS ID REF ALT QUAL FILTER AF DP ANN HET HOM VARTYPE > ' + vcf_out, shell=True)
     except:
+        LOG_FILE = vcf_in + '.snpsift_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -640,13 +636,13 @@ def snpsift_extract(vcf_in):
 #
 # @return = tab delimited version of vcf
 def annovar_table(vcf_in):
-    LOG_FILE= vcf_in + '.annovar_annotate_ERROR.log'
     try:
         table_out = vcf_in.replace('vcf', 'annovar_table')
         subprocess.call(Paths.annovar_table + ' '  + vcf_in + ' ' +Paths.annovar_humandb + ' -buildver hg19 -out ' + table_out + ' -remove -protocol' +
         ' refGene,cytoBand,genomicSuperDups,esp6500siv2_all,1000g2014oct_all,1000g2014oct_afr,1000g2014oct_eas,1000g2014oct_eur,snp138,ljb26_all' +
         ' -operation g,r,r,f,f,f,f,f,f,f -nastring . -vcfinput' ,shell=True)
     except:
+        LOG_FILE= vcf_in + '.annovar_annotate_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -659,11 +655,11 @@ def annovar_table(vcf_in):
 #
 # @return = .vcf 
 def alamut(vcf_in):
-    LOG_FILE = vcf_in + '.alamut_ERROR.log'
     try:
         vcf_out = vcf_in.replace( 'vcf', 'alamut.vcf')
         subprocess.call(Paths.alamut + ' --in ' + vcf_in + ' --ann ' + vcf_out  + ' --unann ' + vcf_out + '.unann > ' + vcf_out + 'alamut.out', shell=True)
     except:
+        LOG_FILE = vcf_in + '.alamut_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit       
@@ -673,31 +669,31 @@ def alamut(vcf_in):
 #
 # @param1 = file to be analyzed
 def flagstats(sam_bam):
-    LOG_FILE = sam_bam + '.flagstats_ERROR.log'
     try:
         stat_out = sam_bam + '.flagstat'
         subprocess.call(Paths.samtools + ' flagstat ' + sam_bam + ' > ' + stat_out, shell=True)
     except:
+        LOG_FILE = sam_bam + '.flagstats_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
 
 def freebayes(bam):
-    LOG_FILE = bam + '.freebayes_Error.log'
     try:
         vcf_out = bam.replace('bam', 'freebayes.vcf')
         subprocess.call(Paths.freebayes + ' -f ' + Paths.db_fa + ' ' + bam + ' > ' + vcf_out, shell=True)
     except:
+        LOG_FILE = bam + '.freebayes_Error.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
 
 def varscan2_SNP(mpile):
     try:
-        LOG_FILE = mpile + '.varscan2_SNP_Error.log'
         vcf_out = mpile.replace('piled',  'varscan2.SNP.vcf')
         subprocess.call(Paths.java7 + ' -jar ' + Paths.varscan2 + ' mpileup2snp ' + mpile +  ' > ' + vcf_out, shell=True)
     except:
+        LOG_FILE = mpile + '.varscan2_SNP_Error.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -708,6 +704,7 @@ def varscan2_INDEL(mpile):
         vcf_out = mpile.replace('piled', 'varscan2.INDEL.vcf')
         subprocess.call(Paths.java7 + ' -jar ' + Paths.varscan2 + ' mpileup2indel ' + mpile + ' > ' + vcf_out, shell=True)
     except:
+        LOG_FILE = mpile + '.varscan2_INDEL.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -717,11 +714,11 @@ def varscan2_INDEL(mpile):
 #
 #@return = .freq file with allele frequencies
 def vcf_af(vcf_in):
-    LOG_FILE = vcf_in + '.vcf_af_ERROR.log'
     try:
         vcf_out = vcf_in.replace('vcf', 'af.vcf')
         subprocess.call(Paths.vcftools + ' --vcf ' + vcf_in + ' --freq', shell=True)
     except:
+        LOG_FILE = vcf_in + '.vcf_af_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit

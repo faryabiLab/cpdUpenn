@@ -18,7 +18,7 @@ def sample_align (run):
         trim_fq1 = trimmed_files[0]
         trim_fq2 = trimmed_files[1]
         aligned_sam = CPD_ETR.align(trim_fq1, trim_fq2, run.frag_size)
-        CPD_ETR.flagstats(aligned_sam)
+        #CPD_ETR.flagstats(aligned_sam)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -105,13 +105,8 @@ def main():
     index2 = sys.argv[5]
     out_dir = sys.argv[6]
     run = Solid2.Solid2(sample_name, read1, read2, read_index, index2, out_dir)
-    #aligned_sam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV141827-50/CPDV141827-50.align.sam'#sample_align(run)
+    aligned_sam = sample_align(run)
     #sample_run(aligned_sam, run, 'dedup')
-    #sample_run(aligned_sam, run, 'allseq')
-    files = glob.glob(run.out_dir)
-    for f in files:
-        if ("final","flagstat","depth", "profile", "log", "txt", "sam", "fastq", "properties") not in f:
-            print f
-            CPD_ETR.del_file(f)
+    #sample_run(aligned_sam, run, 'allseq')            
     
 main()
