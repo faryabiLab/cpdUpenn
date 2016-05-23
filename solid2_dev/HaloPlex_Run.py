@@ -18,7 +18,7 @@ def sample_align (run):
         trim_fq1 = trimmed_files[0]
         trim_fq2 = trimmed_files[1]
         aligned_sam = CPD_ETR.align(trim_fq1, trim_fq2, run.frag_size)
-        #CPD_ETR.flagstats(aligned_sam)
+        CPD_ETR.flagstats(aligned_sam)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -107,8 +107,8 @@ def main():
     run = Solid2.Solid2(sample_name, read1, read2, read_index, index2, out_dir)
     
     aligned_sam = sample_align(run)
-    #sample_run(aligned_sam, run, 'dedup')
-    #sample_run(aligned_sam, run, 'allseq')
+    sample_run(aligned_sam, run, 'dedup')
+    sample_run(aligned_sam, run, 'allseq')
     
     files = glob.glob( (run.out_dir + '/*') )
     keep_files= ["final","flagstat","depth", "profile", "log", "txt", "sam", "fastq", "properties", "fastqc"]

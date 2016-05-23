@@ -22,10 +22,8 @@ def trim(adapt1, adapt2, read1, read2, out_dir):
         ' --stringency 3 -e 0.1 --length 20 --paired ' + read1 + ' ' + read2 +  ' -o ' + out_dir + ' --path_to_cutadapt ' + Paths.cut_adapt, shell=True)
 
         out_fqs =''
-        count = 0
         for filename in glob.glob(out_dir + '*.fq.gz'):
             out_fqs = out_fqs + filename +' '
-            count += 1
     except:
         LOG_FILE = out_dir + 'trim_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
