@@ -162,10 +162,10 @@ def intersect(bam, amplicon_bed):
 # @param2 = bed file of amplified regions
 #
 # return = string of bam filename that has been interesected
-def coverage(bam, amplicon_bed):
+def coverage(bam, amplicon_bed, desc):
     LOG_FILE = bam + '.coverage_ERROR.log'
     try:
-        coverage_out = bam.replace('bam', 'coverage.calc')
+        coverage_out = bam.replace('bam', (desc +'.coverage.calc'))
         subprocess.call(Paths.bedtools + 'coverageBed -b ' + bam + ' -a ' + amplicon_bed + ' > ' + coverage_out, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
@@ -233,10 +233,10 @@ def clip(bam):
 # @param1 = bam file for analysis
 # @param2 = sample name
 # @param3 = bed file of target regions
-def depth(bam, out_dir, sample_name, amplicon_bed):
+def depth(bam, out_dir, sample_name, amplicon_bed, method):
     LOG_FILE = bam + '.depth_ERROR.log'
     try:
-        depth_out = out_dir + sample_name 
+        depth_out = out_dir + sample_name + '.' + method 
         subprocess.call(Paths.java7 + ' -Xmx72g -Djava.io.tmpdir=' + tmp + ' -jar ' + Paths.GATK +
         ' -T DepthOfCoverage -K ' + Paths.GATKkey + ' -et NO_ET -I ' + bam + ' -o ' + depth_out +
         '.depth --minBaseQuality 22 -baseCounts -ct 0 -ct 1 -ct 100 -ct 250 -ct 1000 -L ' + amplicon_bed + ' -R ' + Paths.db_fa, shell=True)

@@ -69,9 +69,9 @@ def sample_run(aligned_sam, run, method):
         CPD_ETR.sort(final_bam)                              
         CPD_ETR.index(final_bam)
         CPD_ETR.flagstats(final_bam)
-        CPD_ETR.depth(final_bam, run.out_dir, run.sample_name, run.target_bed) 
-        CPD_ETR.coverage(final_bam, run.amplicon_bed)        
-        CPD_ETR.coverage(final_bam, run.covered_bed)        
+        CPD_ETR.depth(final_bam, run.out_dir, run.sample_name, run.target_bed, method) 
+        CPD_ETR.coverage(final_bam, run.target_bed, (method + '.target'))        
+        CPD_ETR.coverage(final_bam, run.covered_bed, (method + '.covered'))        
 
         #call variants mutect2 and annotate
         mutect_vcf = CPD_ETR.mutect2(final_bam, run.target_bed)        
@@ -85,7 +85,7 @@ def sample_run(aligned_sam, run, method):
         freebayes_vcf = CPD_ETR.freebayes(final_bam)
         
         #call variants with varscan
-        mpile = CPD_ETR.mpile(final_bam, run.amplicon_bed)        
+        mpile = CPD_ETR.mpile(final_bam, run.target_bed)        
         varscan2_snp = CPD_ETR.varscan2_SNP(mpile)
         varscan2_INDEL = CPD_ETR.varscan2_INDEL(mpile)
 
