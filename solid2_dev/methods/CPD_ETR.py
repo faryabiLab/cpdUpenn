@@ -696,7 +696,7 @@ def varscan2_SNP(mpile):
     try:
         LOG_FILE = mpile + '.varscan2_SNP_Error.log'
         vcf_out = mpile.replace('piled',  'varscan2.SNP.vcf')
-        subprocess.call(Paths.varscan2 + ' mpileup2snp ' + mpile +  + ' > ' + vcf_out, shell=True)
+        subprocess.call(Paths.java7 + ' -jar ' + Paths.varscan2 + ' mpileup2snp ' + mpile +  + ' > ' + vcf_out, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
@@ -706,7 +706,7 @@ def varscan2_INDEL(mpile):
     try:
         LOG_FILE = mpile + '.varscan2_INDEL.log'
         vcf_out = mpile.replace('piled', 'varscan2.INDEL.vcf')
-        subprocess.call(Paths.varscan2 + ' mpileup2indel ' + mpile + ' > ' + vcf_out, shell=True)
+        subprocess.call(Paths.java7 + ' -jar ' + Paths.varscan2 + ' mpileup2indel ' + mpile + ' > ' + vcf_out, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
