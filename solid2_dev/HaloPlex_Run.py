@@ -85,8 +85,8 @@ def sample_run(aligned_sam, run, method):
 #        freebayes_vcf = CPD_ETR.freebayes(final_bam)
         
         #call variants with varscan
-        final_bam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV141827-50/CPDV141827-50.dedup.final.bam'
-        mpile = CPD_ETR.mpile(final_bam, run.target_bed)        
+        #final_bam = #'/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV141827-50/CPDV141827-50.dedup.final.bam'
+        mpile ='/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV141827-50/CPDV141827-50.dedup.final.piled' #CPD_ETR.mpile(final_bam, run.target_bed)        
         varscan2_snp = CPD_ETR.varscan2_SNP(mpile)
         varscan2_INDEL = CPD_ETR.varscan2_INDEL(mpile)
 
