@@ -29,16 +29,15 @@ def sample_run(aligned_sam, run, method):
     LOG_FILE = run.out_dir + run.sample_name + '_run_error.log'
     try:        
         if (method == 'dedup'):
-            print 'entered dedup'
             bam = CPD_ETR.dedup(aligned_sam, run.index2, run.amplicon_bed)
             bam = CPD_ETR.fix(bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
-            bam = CPD_ETR.index(bam)           
+            CPD_ETR.index(bam)           
             CPD_ETR.flagstats(bam)
         else:
             bam = CPD_ETR.sam2bam(aligned_sam)
             bam = CPD_ETR.sort(bam)
             bam = CPD_ETR.fix(bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
-            bam = CPD_ETR.index(bam)        
+            CPD_ETR.index(bam)        
             CPD_ETR.flagstats(bam)
 
         #intersect
