@@ -69,9 +69,9 @@ def align(read1, read2, frag_size):
 def dedup(aligned_sam, index_file, amplicon_bed):
     LOG_FILE = aligned_sam + '.dedup_ERROR.log'
     try:
-        dedup_out = aligned_sam.replace('sam', 'bam')
+        dedup_out = aligned_sam.replace('sam', 'consensus.bam')
         subprocess.call(Paths.java8 + ' -Xmx72g -jar ' + Paths.MBCdedup + ' -X ' + tmp + ' -b ' +
-        amplicon_bed + ' -o ' + dedup_out + ' ' + aligned_sam + ' ' + index_file + ' > ' + dedup_out + 'dedup_out', shell=True)
+        amplicon_bed + ' -o ' + dedup_out + ' ' + aligned_sam + ' ' + index_file, shell=True)
     except:
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
