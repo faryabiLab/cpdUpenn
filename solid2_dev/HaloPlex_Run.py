@@ -109,7 +109,7 @@ def main():
     sample_run(aligned_sam, run, 'allseq')
     files = glob.glob(run.out_dir)
     for f in files:
-        if ("final","flagstat","depth", "profile", "log", "txt", "sam") not in f:
+        if ("final","flagstat","depth", "profile", "log", "txt", "sam", "fastq") not in f:
             CPD_ETR.del_file(f)
 
 main()
