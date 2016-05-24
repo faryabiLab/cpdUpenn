@@ -35,57 +35,59 @@ def sample_run(aligned_sam, run, method):
             CPD_ETR.flagstats(bam)
         else:
             bam = CPD_ETR.sam2bam(aligned_sam)
+            print 'sam2bam done'
             CPD_ETR.sort(bam)
+            print 'sam sorted'
             bam = CPD_ETR.fix(bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
             CPD_ETR.index(bam)        
             CPD_ETR.flagstats(bam)
-
-        #intersect
-        intersect_bam = CPD_ETR.intersect(bam, run.target_bed)
-        intersect_bam = CPD_ETR.fix(intersect_bam, run.target_bed, run.index2, run.sample_name, run.lib_name)
-        CPD_ETR.sort(intersect_bam)
-        CPD_ETR.index(intersect_bam)
-        
-        #begin indel realignment
-        recoded_bam = CPD_ETR.print_misencoded(intersect_bam, run.target_bed)
-        CPD_ETR.sort(recoded_bam)        
-        CPD_ETR.index(recoded_bam)
-
-        intervals = CPD_ETR.intervals(recoded_bam, run.target_bed, run.sample_name, run.out_dir)
-        realigned_bam = CPD_ETR.realigner(recoded_bam, run.target_bed, intervals)
-        CPD_ETR.sort(realigned_bam)
-        CPD_ETR.index(realigned_bam)
-
-        recal_report = CPD_ETR.recal(realigned_bam, run.target_bed)
-        recal_bam = CPD_ETR.print_recal(realigned_bam, run.target_bed, recal_report)
-        CPD_ETR.sort(realigned_bam)
-        CPD_ETR.index(recal_bam)
-         
-        #soft clip bam
-        clip_bam = CPD_ETR.clip(recal_bam) 
-        
-        #rename generate stats of final bam
-        final_bam = CPD_ETR.rename_file(clip_bam, (run.out_dir + run.sample_name + '.' + method + '.final.bam'))        
-        CPD_ETR.sort(final_bam)                              
-        CPD_ETR.index(final_bam)
-        CPD_ETR.flagstats(final_bam)
-        CPD_ETR.depth(final_bam, run.out_dir, run.sample_name, run.target_bed, method) 
-        CPD_ETR.coverage(final_bam, run.target_bed, (method + '.target'))        
-        CPD_ETR.coverage(final_bam, run.covered_bed, (method + '.covered'))        
-
-        #call variants mutect2 and annotate
-        mutect_vcf = CPD_ETR.mutect2(final_bam, run.target_bed)        
-        mfiltered_vcf =  CPD_ETR.filter_vcf(mutect_vcf)
-
-        alamut_vcf = CPD_ETR.alamut(mfiltered_vcf)       
-        
-        #call variants with freebayes and annotate
-        freebayes_vcf = CPD_ETR.freebayes(final_bam)
-                      
-        #call variants with varscan
-        mpile =CPD_ETR.mpile(final_bam, run.target_bed)
-        varscan2_snp = CPD_ETR.varscan2_SNP(mpile)
-        varscan2_INDEL = CPD_ETR.varscan2_INDEL(mpile)
+        print 'back in main'
+#        #intersect
+#        intersect_bam = CPD_ETR.intersect(bam, run.target_bed)
+#        intersect_bam = CPD_ETR.fix(intersect_bam, run.target_bed, run.index2, run.sample_name, run.lib_name)
+#        CPD_ETR.sort(intersect_bam)
+#        CPD_ETR.index(intersect_bam)
+#        
+#        #begin indel realignment
+#        recoded_bam = CPD_ETR.print_misencoded(intersect_bam, run.target_bed)
+#        CPD_ETR.sort(recoded_bam)        
+#        CPD_ETR.index(recoded_bam)
+#
+#        intervals = CPD_ETR.intervals(recoded_bam, run.target_bed, run.sample_name, run.out_dir)
+#        realigned_bam = CPD_ETR.realigner(recoded_bam, run.target_bed, intervals)
+#        CPD_ETR.sort(realigned_bam)
+#        CPD_ETR.index(realigned_bam)
+#
+#        recal_report = CPD_ETR.recal(realigned_bam, run.target_bed)
+#        recal_bam = CPD_ETR.print_recal(realigned_bam, run.target_bed, recal_report)
+#        CPD_ETR.sort(realigned_bam)
+#        CPD_ETR.index(recal_bam)
+#         
+#        #soft clip bam
+#        clip_bam = CPD_ETR.clip(recal_bam) 
+#        
+#        #rename generate stats of final bam
+#        final_bam = CPD_ETR.rename_file(clip_bam, (run.out_dir + run.sample_name + '.' + method + '.final.bam'))        
+#        CPD_ETR.sort(final_bam)                              
+#        CPD_ETR.index(final_bam)
+#        CPD_ETR.flagstats(final_bam)
+#        CPD_ETR.depth(final_bam, run.out_dir, run.sample_name, run.target_bed, method) 
+#        CPD_ETR.coverage(final_bam, run.target_bed, (method + '.target'))        
+#        CPD_ETR.coverage(final_bam, run.covered_bed, (method + '.covered'))        
+#
+#        #call variants mutect2 and annotate
+#        mutect_vcf = CPD_ETR.mutect2(final_bam, run.target_bed)        
+#        mfiltered_vcf =  CPD_ETR.filter_vcf(mutect_vcf)
+#
+#        alamut_vcf = CPD_ETR.alamut(mfiltered_vcf)       
+#        
+#        #call variants with freebayes and annotate
+#        freebayes_vcf = CPD_ETR.freebayes(final_bam)
+#                      
+#        #call variants with varscan
+#        mpile =CPD_ETR.mpile(final_bam, run.target_bed)
+#        varscan2_snp = CPD_ETR.varscan2_SNP(mpile)
+#        varscan2_INDEL = CPD_ETR.varscan2_INDEL(mpile)
 
         
                 
