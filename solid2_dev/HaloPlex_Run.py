@@ -28,75 +28,64 @@ def sample_align (run):
 def sample_run(aligned_sam, run, method):
     LOG_FILE = run.out_dir + run.sample_name + '_run_error.log'
     try:        
-#        if (method == 'dedup'):
-#            bam = CPD_ETR.dedup(aligned_sam, run.index2, run.amplicon_bed)
-#            bam = CPD_ETR.fix(bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
-#            CPD_ETR.index(bam)           
-#            CPD_ETR.flagstats(bam)
-#        else:
-#            bam = CPD_ETR.sam2bam(aligned_sam)
-#            bam = CPD_ETR.sort(bam)
-#            bam = CPD_ETR.fix(bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
-#            CPD_ETR.index(bam)        
-#            CPD_ETR.flagstats(bam)
-#
-#        #intersect
-#        intersect_bam = CPD_ETR.intersect(bam, run.target_bed)
-#        intersect_bam = CPD_ETR.fix(intersect_bam, run.target_bed, run.index2, run.sample_name, run.lib_name)
-#        CPD_ETR.sort(intersect_bam)
-#        CPD_ETR.index(intersect_bam)
-#        
-#        #begin indel realignment
-#        recoded_bam = CPD_ETR.print_misencoded(intersect_bam, run.target_bed)
-#        CPD_ETR.sort(recoded_bam)        
-#        CPD_ETR.index(recoded_bam)
-#
-#        intervals = CPD_ETR.intervals(recoded_bam, run.target_bed, run.sample_name, run.out_dir)
-#        realigned_bam = CPD_ETR.realigner(recoded_bam, run.target_bed, intervals)
-#        CPD_ETR.sort(realigned_bam)
-#        CPD_ETR.index(realigned_bam)
-#
-#        recal_report = CPD_ETR.recal(realigned_bam, run.target_bed)
-#        recal_bam = CPD_ETR.print_recal(realigned_bam, run.target_bed, recal_report)
-#        CPD_ETR.sort(realigned_bam)
-#        CPD_ETR.index(recal_bam)
-#         
-#        #soft clip bam
-#        clip_bam = CPD_ETR.clip(recal_bam) 
-#        
-#        #rename generate stats of final bam
-#        final_bam = CPD_ETR.rename_file(clip_bam, (run.out_dir + run.sample_name + '.' + method + '.final.bam'))        
-#        CPD_ETR.sort(final_bam)                              
-#        CPD_ETR.index(final_bam)
-#        CPD_ETR.flagstats(final_bam)
-#        CPD_ETR.depth(final_bam, run.out_dir, run.sample_name, run.target_bed, method) 
-#        CPD_ETR.coverage(final_bam, run.target_bed, (method + '.target'))        
-#        CPD_ETR.coverage(final_bam, run.covered_bed, (method + '.covered'))        
+        if (method == 'dedup'):
+            bam = CPD_ETR.dedup(aligned_sam, run.index2, run.amplicon_bed)
+            bam = CPD_ETR.fix(bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
+            CPD_ETR.index(bam)           
+            CPD_ETR.flagstats(bam)
+        else:
+            bam = CPD_ETR.sam2bam(aligned_sam)
+            bam = CPD_ETR.sort(bam)
+            bam = CPD_ETR.fix(bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
+            CPD_ETR.index(bam)        
+            CPD_ETR.flagstats(bam)
+
+        #intersect
+        intersect_bam = CPD_ETR.intersect(bam, run.target_bed)
+        intersect_bam = CPD_ETR.fix(intersect_bam, run.target_bed, run.index2, run.sample_name, run.lib_name)
+        CPD_ETR.sort(intersect_bam)
+        CPD_ETR.index(intersect_bam)
+        
+        #begin indel realignment
+        recoded_bam = CPD_ETR.print_misencoded(intersect_bam, run.target_bed)
+        CPD_ETR.sort(recoded_bam)        
+        CPD_ETR.index(recoded_bam)
+
+        intervals = CPD_ETR.intervals(recoded_bam, run.target_bed, run.sample_name, run.out_dir)
+        realigned_bam = CPD_ETR.realigner(recoded_bam, run.target_bed, intervals)
+        CPD_ETR.sort(realigned_bam)
+        CPD_ETR.index(realigned_bam)
+
+        recal_report = CPD_ETR.recal(realigned_bam, run.target_bed)
+        recal_bam = CPD_ETR.print_recal(realigned_bam, run.target_bed, recal_report)
+        CPD_ETR.sort(realigned_bam)
+        CPD_ETR.index(recal_bam)
+         
+        #soft clip bam
+        clip_bam = CPD_ETR.clip(recal_bam) 
+        
+        #rename generate stats of final bam
+        final_bam = CPD_ETR.rename_file(clip_bam, (run.out_dir + run.sample_name + '.' + method + '.final.bam'))        
+        CPD_ETR.sort(final_bam)                              
+        CPD_ETR.index(final_bam)
+        CPD_ETR.flagstats(final_bam)
+        CPD_ETR.depth(final_bam, run.out_dir, run.sample_name, run.target_bed, method) 
+        CPD_ETR.coverage(final_bam, run.target_bed, (method + '.target'))        
+        CPD_ETR.coverage(final_bam, run.covered_bed, (method + '.covered'))        
 
         #call variants mutect2 and annotate
-#        mutect_vcf = CPD_ETR.mutect2(final_bam, run.target_bed)        
-#        mfiltered_vcf =  CPD_ETR.filter_vcf(mutect_vcf)
-#        snp_vcf = CPD_ETR.snpeff(mfiltered_vcf)
-#        snp_sift_vcf = CPD_ETR.snpsift(snp_vcf)
+        mutect_vcf = CPD_ETR.mutect2(final_bam, run.target_bed)        
+        mfiltered_vcf =  CPD_ETR.filter_vcf(mutect_vcf)
 
-        final_bam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV141827-50/CPDV141827-50.dedup.final.bam'
-        #annovar_vcf =CPD_ETR.annovar_table(mfiltered_vcf)
-        #alamut_vcf = CPD_ETR.alamut(mfiltered_vcf)       
+        alamut_vcf = CPD_ETR.alamut(mfiltered_vcf)       
         
         #call variants with freebayes and annotate
         freebayes_vcf = CPD_ETR.freebayes(final_bam)
-        freebayes_filter =CPD_ETR.filter_vcf(freebayes_vcf)
-        freebayes_alamut = CPD_ETR.alamut(freebayes_filter)
-        
-        
-       
+                      
         #call variants with varscan
-        #final_bam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV141827-50/CPDV141827-50.dedup.final.bam'
         mpile =CPD_ETR.mpile(final_bam, run.target_bed)
         varscan2_snp = CPD_ETR.varscan2_SNP(mpile)
         varscan2_INDEL = CPD_ETR.varscan2_INDEL(mpile)
-        vasrcan_snp_filter = CPD_ETR.filter_vcf(varscan2_snp)
-        varscan_alamut = CPD_ETR.alamut(varscan2_snp)
 
         
                 
@@ -117,8 +106,8 @@ def main():
     run = Solid2.Solid2(sample_name, read1, read2, read_index, index2, out_dir)
     
     aligned_sam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV141827-50CPDV141827-50.align.sam'#sample_align(run)
-    sample_run(aligned_sam, run, 'dedup')
-    #sample_run(aligned_sam, run, 'allseq')
+    #sample_run(aligned_sam, run, 'dedup')
+    sample_run(aligned_sam, run, 'allseq')
     
     #files = glob.glob( (run.out_dir + '/*') )
    # keep_files= ["final","flagstat","depth", "profile", "log", "txt", "sam", "fastq", "properties", "fastqc"]
