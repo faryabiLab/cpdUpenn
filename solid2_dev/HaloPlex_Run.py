@@ -39,6 +39,7 @@ def sample_run(aligned_sam, run, method):
             #CPD_ETR.sort(bam)
             #print 'sam sorted'
             bam = CPD_ETR.fix(bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
+            CPD_ETR.sort(bam)
             #print 'fixed'
             CPD_ETR.index(bam)
             #print 'indexed'        
