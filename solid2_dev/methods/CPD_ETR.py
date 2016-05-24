@@ -688,6 +688,7 @@ def freebayes(bam):
 
 def varscan2_SNP(mpile):
     try:
+        print mpile
         vcf_out = mpile.replace('piled',  'varscan2.SNP.vcf')
         subprocess.call(Paths.java7 + ' -jar ' + Paths.varscan2 + ' mpileup2snp ' + mpile +  ' > ' + vcf_out, shell=True)
     except:
@@ -698,7 +699,7 @@ def varscan2_SNP(mpile):
         
 def varscan2_INDEL(mpile):
     try:
-        LOG_FILE = mpile + '.varscan2_INDEL.log'
+        print mpile
         vcf_out = mpile.replace('piled', 'varscan2.INDEL.vcf')
         subprocess.call(Paths.java7 + ' -jar ' + Paths.varscan2 + ' mpileup2indel ' + mpile + ' > ' + vcf_out, shell=True)
     except:
