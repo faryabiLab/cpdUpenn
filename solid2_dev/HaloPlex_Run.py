@@ -85,7 +85,8 @@ def sample_run(aligned_sam, run, method):
 #        freebayes_vcf = CPD_ETR.freebayes(final_bam)
 #       
 #        #call variants with varscan
-        mpile ='/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV141827-50/CPDV141827-50.dedup.final.piled'#CPD_ETR.mpile(final_bam, run.target_bed)        
+        final_bam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV141827-50/CPDV141827-50.dedup.final.bam'
+        mpile =CPD_ETR.mpile(final_bam, run.target_bed)        
         varscan2_snp = CPD_ETR.varscan2_SNP(mpile)
         varscan2_INDEL = CPD_ETR.varscan2_INDEL(mpile)
 
@@ -108,11 +109,11 @@ def main():
     
     aligned_sam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV141827-50CPDV141827-50.align.sam'#sample_align(run)
     sample_run(aligned_sam, run, 'dedup')
-    sample_run(aligned_sam, run, 'allseq')
+    #sample_run(aligned_sam, run, 'allseq')
     
-    files = glob.glob( (run.out_dir + '/*') )
-    keep_files= ["final","flagstat","depth", "profile", "log", "txt", "sam", "fastq", "properties", "fastqc"]
-    for f in files:
-        if not any(substring in f for substring in keep_files):
-            CPD_ETR.del_file(f)   
+    #files = glob.glob( (run.out_dir + '/*') )
+   # keep_files= ["final","flagstat","depth", "profile", "log", "txt", "sam", "fastq", "properties", "fastqc"]
+    #for f in files:
+    #    if not any(substring in f for substring in keep_files):
+       #     CPD_ETR.del_file(f)   
 main()
