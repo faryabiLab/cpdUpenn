@@ -72,25 +72,33 @@ def sample_run(aligned_sam, run, method):
 #        CPD_ETR.depth(final_bam, run.out_dir, run.sample_name, run.target_bed, method) 
 #        CPD_ETR.coverage(final_bam, run.target_bed, (method + '.target'))        
 #        CPD_ETR.coverage(final_bam, run.covered_bed, (method + '.covered'))        
-#
-#        #call variants mutect2 and annotate
+
+        #call variants mutect2 and annotate
 #        mutect_vcf = CPD_ETR.mutect2(final_bam, run.target_bed)        
 #        mfiltered_vcf =  CPD_ETR.filter_vcf(mutect_vcf)
 #        snp_vcf = CPD_ETR.snpeff(mfiltered_vcf)
 #        snp_sift_vcf = CPD_ETR.snpsift(snp_vcf)
-#        annovar_vcf =CPD_ETR.annovar_table(mfiltered_vcf)
-#        alamut_vcf = CPD_ETR.alamut(mfiltered_vcf)       
-#        
-#        #call variants with freebayes and annotate
-#        freebayes_vcf = CPD_ETR.freebayes(final_bam)
-#       
-#        #call variants with varscan
+
         final_bam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV141827-50/CPDV141827-50.dedup.final.bam'
+        #annovar_vcf =CPD_ETR.annovar_table(mfiltered_vcf)
+        #alamut_vcf = CPD_ETR.alamut(mfiltered_vcf)       
+        
+        #call variants with freebayes and annotate
+        freebayes_vcf = CPD_ETR.freebayes(final_bam)
+        freebayes_filter =CPD_ETR.filter_vcf(freebayes_vcf)
+        freebayes_alamut = CPD_ETR.alamut(freebayes_filter)
+        
+        
+       
+        #call variants with varscan
+        #final_bam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV141827-50/CPDV141827-50.dedup.final.bam'
         mpile =CPD_ETR.mpile(final_bam, run.target_bed)
-        print mpile        
         varscan2_snp = CPD_ETR.varscan2_SNP(mpile)
         varscan2_INDEL = CPD_ETR.varscan2_INDEL(mpile)
+        vasrcan_snp_filter = freebayes_filter =CPD_ETR.filter_vcf(varscan2_snp)
+        varscan_alamut = CPD.ETR.alamut(varscan2_snp)
 
+        
                 
 
     except:

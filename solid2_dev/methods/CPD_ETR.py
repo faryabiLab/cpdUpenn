@@ -247,14 +247,15 @@ def depth(bam, out_dir, sample_name, amplicon_bed, method):
 def mpile (bam, amplicon_bed):
     LOG_FILE = bam + '.mpile_ERROR.log'
     try:
-        vcf_out = bam.replace('bam', 'piled')
+        pile_out = bam.replace('bam', 'piled')
         subprocess.call(Paths.samtools + ' mpileup -f ' + Paths.db_fa + ' ' + bam + ' -l' + amplicon_bed +
-        ' >' + vcf_out, shell=True)
+        ' >' + pile_out, shell=True)
     except:
         LOG_FILE = bam + '.mpile_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
+    return pile_out
 
  
 # haplotyper - calls variants with HaploTypeCaller
