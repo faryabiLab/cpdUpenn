@@ -96,7 +96,7 @@ def sample_run(aligned_sam, run, method):
         varscan2_snp = CPD_ETR.varscan2_SNP(mpile)
         varscan2_INDEL = CPD_ETR.varscan2_INDEL(mpile)
         vasrcan_snp_filter = freebayes_filter =CPD_ETR.filter_vcf(varscan2_snp)
-        varscan_alamut = CPD.ETR.alamut(varscan2_snp)
+        varscan_alamut = CPD_ETR.alamut(varscan2_snp)
 
         
                 
