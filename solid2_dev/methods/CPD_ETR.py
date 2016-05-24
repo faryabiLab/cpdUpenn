@@ -93,6 +93,7 @@ def sam2bam(sam):
 def sort(bam):
     try:
         subprocess.call(Paths.novosort + ' -t ' +tmp + ' -c 32 ' + bam, shell=True)
+        print 'sort complete'
     except:
         LOG_FILE = bam + '.sort_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
