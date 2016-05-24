@@ -686,6 +686,7 @@ def freebayes(bam):
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
+    return vcf_out
 
 def varscan2_SNP(mpile):
     try:
@@ -697,6 +698,7 @@ def varscan2_SNP(mpile):
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
+    return vcf_out
         
 def varscan2_INDEL(mpile):
     try:
@@ -708,6 +710,7 @@ def varscan2_INDEL(mpile):
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
+    return vcf_out
 # vcf_af
 #
 #@param1 = VCF for allele frequency calc
