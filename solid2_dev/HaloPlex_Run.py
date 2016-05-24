@@ -35,7 +35,7 @@ def sample_run(aligned_sam, run, method):
             CPD_ETR.flagstats(bam)
         else:
             bam = CPD_ETR.sam2bam(aligned_sam)
-            bam = CPD_ETR.sort(bam)
+            CPD_ETR.sort(bam)
             bam = CPD_ETR.fix(bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
             CPD_ETR.index(bam)        
             CPD_ETR.flagstats(bam)
