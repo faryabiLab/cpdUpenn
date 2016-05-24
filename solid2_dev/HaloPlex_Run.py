@@ -34,15 +34,11 @@ def sample_run(aligned_sam, run, method):
             CPD_ETR.index(bam)           
             CPD_ETR.flagstats(bam)
         else:
-            bam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV141827-50/CPDV141827-50.align.allseq.bam'#CPD_ETR.sam2bam(aligned_sam)
-            #print 'sam2bam done'
-            #CPD_ETR.sort(bam)
-            #print 'sam sorted'
+            bam = CPD_ETR.sam2bam(aligned_sam)
+            CPD_ETR.sort(bam)
             bam = CPD_ETR.fix(bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
             CPD_ETR.sort(bam)
-            #print 'fixed'
             CPD_ETR.index(bam)
-            #print 'indexed'        
             #CPD_ETR.flagstats(bam)
         print 'back in main'
 #        #intersect
