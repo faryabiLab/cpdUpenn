@@ -41,17 +41,17 @@ def sample_run(aligned_sam, run, method):
         #intersect
         intersect_bam = CPD_ETR.intersect(bam, run.target_bed)
         intersect_bam = CPD_ETR.fix(intersect_bam, run.target_bed, run.index2, run.sample_name, run.lib_name)
-        CPD_ETR.sort(intersect_bam)
+        intersect_bam = CPD_ETR.sort(intersect_bam)
         CPD_ETR.index(intersect_bam)
         
         #begin indel realignment
         recoded_bam = CPD_ETR.print_misencoded(intersect_bam, run.target_bed)
-        CPD_ETR.sort(recoded_bam)        
+        recoded_bam = CPD_ETR.sort(recoded_bam)        
         CPD_ETR.index(recoded_bam)
 
         intervals = CPD_ETR.intervals(recoded_bam, run.target_bed, run.sample_name, run.out_dir)
         realigned_bam = CPD_ETR.realigner(recoded_bam, run.target_bed, intervals)
-        CPD_ETR.sort(realigned_bam)
+        realigned_bam = CPD_ETR.sort(realigned_bam)
         CPD_ETR.index(realigned_bam)
 
         recal_report = CPD_ETR.recal(realigned_bam, run.target_bed)
