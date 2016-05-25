@@ -31,7 +31,7 @@ def sample_run(aligned_sam, run, method):
         if (method == 'dedup'):
             bam = CPD_ETR.dedup(aligned_sam, run.index2, run.amplicon_bed)
         else:
-            bam ='/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV141827-50/CPDV141827-50.align.allseq.bam'#CPD_ETR.sam2bam(aligned_sam)
+            bam =CPD_ETR.sam2bam(aligned_sam)
             CPD_ETR.sort(bam)
             
         CPD_ETR.flagstats(bam)
@@ -102,7 +102,7 @@ def main():
     
     aligned_sam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV141827-50/CPDV141827-50.align.sam'#sample_align(run)
     sample_run(aligned_sam, run, 'allseq')
-    #sample_run(aligned_sam, run, 'dedup')
+    sample_run(aligned_sam, run, 'dedup')
 
     
     #files = glob.glob( (run.out_dir + '/*') )
