@@ -31,7 +31,7 @@ def sample_run(aligned_sam, run, method):
         if (method == 'dedup'):
             bam = CPD_ETR.dedup(aligned_sam, run.index2, run.amplicon_bed)
         else:
-            bam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV141827-50/CPDV141827-50.align.allseq.bam'#CPD_ETR.sam2bam(aligned_sam)
+            bam = CPD_ETR.sam2bam(aligned_sam)
             #bam = CPD_ETR.bam_sort(bam)
             
         CPD_ETR.flagstats(bam)
