@@ -32,7 +32,7 @@ def sample_run(aligned_sam, run, method):
             bam = CPD_ETR.dedup(aligned_sam, run.index2, run.amplicon_bed)
         else:
             bam = CPD_ETR.sam2bam(aligned_sam)
-            #bam = CPD_ETR.bam_sort(bam)
+            bam = CPD_ETR.sort(bam)
             
         CPD_ETR.flagstats(bam)
         CPD_ETR.fix(bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
