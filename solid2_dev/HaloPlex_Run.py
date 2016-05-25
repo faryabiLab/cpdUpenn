@@ -32,10 +32,10 @@ def sample_run(aligned_sam, run, method):
             bam = CPD_ETR.dedup(aligned_sam, run.index2, run.amplicon_bed)
         else:
             bam = CPD_ETR.sam2bam(aligned_sam)
-            CPD_ETR.sort(bam)
+            bam = CPD_ETR.sort(bam)
             
         CPD_ETR.flagstats(bam)
-        CPD_ETR.fix(bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
+        bam = CPD_ETR.fix(bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
         CPD_ETR.index(bam)
 
         #intersect
@@ -56,7 +56,7 @@ def sample_run(aligned_sam, run, method):
 
         recal_report = CPD_ETR.recal(realigned_bam, run.target_bed)
         recal_bam = CPD_ETR.print_recal(realigned_bam, run.target_bed, recal_report)
-        CPD_ETR.sort(realigned_bam)
+        recal_bam = CPD_ETR.sort(realigned_bam)
         CPD_ETR.index(recal_bam)
          
         #soft clip bam
@@ -64,7 +64,7 @@ def sample_run(aligned_sam, run, method):
         
         #rename generate stats of final bam
         final_bam = CPD_ETR.rename_file(clip_bam, (run.out_dir + run.sample_name + '.' + method + '.final.bam'))        
-        CPD_ETR.sort(final_bam)                              
+        final_bam = CPD_ETR.sort(final_bam)                              
         CPD_ETR.index(final_bam)
         CPD_ETR.flagstats(final_bam)
         CPD_ETR.depth(final_bam, run.out_dir, run.sample_name, run.target_bed, method) 

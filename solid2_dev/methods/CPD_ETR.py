@@ -107,12 +107,14 @@ def sam2bam(sam):
 # @param1 = bam file that requires sorting
 def sort(bam):
     try:
-        subprocess.call(Paths.novosort + ' -t ' +tmp + ' -c 32 ' + bam, shell=True)
+        bam_out = bam.replace('bam', 'sort.bam')
+        subprocess.call(Paths.novosort + ' -t ' +tmp + ' -c 32 ' + bam + ' > ' + bam_out , shell=True)
     except:
         LOG_FILE = bam + '.sort_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
+    return bam_out
 
 # fix - uses picard tools to fix read groups using picard-tools
 #
@@ -671,7 +673,7 @@ def annovar_table(vcf_in):
 def alamut(vcf_in):
     try:
         vcf_out = vcf_in.replace( 'vcf', 'alamut.vcf')
-        subprocess.call(Paths.alamut + ' --in ' + vcf_in + ' --ann ' + vcf_out  + ' --unann ' + vcf_out + '.unann > ' + vcf_out + 'alamut.out', shell=True)
+        subprocess.call(Paths.alamut + ' --in ' + vcf_in + ' --ann ' + vcf_out  + ' --unann ' + vcf_out + '.unann' , shell=True)
     except:
         LOG_FILE = vcf_in + '.alamut_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
