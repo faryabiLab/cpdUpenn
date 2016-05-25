@@ -79,6 +79,22 @@ def dedup(aligned_sam, index_file, amplicon_bed):
 def sam2bam(sam):
     try:
         bam_out = sam.replace('sam', 'allseq.bam')
+        subprocess.call(Paths.samtools + ' sort -O bam' + sam + ' -o ' + bam_out, shell=True)
+    except:
+        LOG_FILE = sam + '.sam2bam_ERROR.log'
+        logging.basicConfig(filename=LOG_FILE)
+        logging.critical(traceback.format_exc())
+        sys.exit
+    return bam_out
+    
+# sam2bam - converts sam files to bam files using samtools
+#
+# @param1 = sam to be convereted
+#
+# @return = string of bam filename
+def sam_sort(sam):
+    try:
+        bam_out = sam.replace('sam', 'allseq.bam')
         subprocess.call(Paths.samtools + ' view -bS ' + sam + ' -o ' + bam_out, shell=True)
     except:
         LOG_FILE = sam + '.sam2bam_ERROR.log'
@@ -86,7 +102,6 @@ def sam2bam(sam):
         logging.critical(traceback.format_exc())
         sys.exit
     return bam_out
-
 # sort - sorts sam files
 #
 # @param1 = bam file that requires sorting
