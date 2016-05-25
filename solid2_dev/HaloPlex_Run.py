@@ -100,7 +100,7 @@ def main():
     out_dir = sys.argv[6]
     run = Solid2.Solid2(sample_name, read1, read2, read_index, index2, out_dir)
     
-    aligned_sam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDV150986-35_ucsc19/CPDV150986-35.align.sam'#sample_align(run)
+    aligned_sam = '/project/cpdlab/cpdUpenn/solid2_dev/HiSeqSamples/CPDC151858-50/CPDC151858-50.align.sam'#sample_align(run)
     sample_run(aligned_sam, run, 'allseq')
     #sample_run(aligned_sam, run, 'dedup')
 
