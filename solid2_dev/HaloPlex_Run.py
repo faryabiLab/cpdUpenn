@@ -32,22 +32,22 @@ def sample_run(aligned_sam, run, method):
             bam = CPD_ETR.dedup(aligned_sam, run.index2, run.amplicon_bed)
         else:
             bam =CPD_ETR.sam2bam(aligned_sam)
-            bam = CPD_ETR.bam_sort(bam)
+            #bam = CPD_ETR.bam_sort(bam)
             
-        CPD_ETR.flagstats(bam)
-        CPD_ETR.fix(bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
-        CPD_ETR.index(bam)
+        #CPD_ETR.flagstats(bam)
+        #CPD_ETR.fix(bam, run.amplicon_bed, run.index2, run.sample_name, run.lib_name)
+        #CPD_ETR.index(bam)
 
         #intersect
-        intersect_bam = CPD_ETR.intersect(bam, run.target_bed)
-        intersect_bam = CPD_ETR.fix(intersect_bam, run.target_bed, run.index2, run.sample_name, run.lib_name)
-        CPD_ETR.sort(intersect_bam)
-        CPD_ETR.index(intersect_bam)
+        #intersect_bam = CPD_ETR.intersect(bam, run.target_bed)
+        #intersect_bam = CPD_ETR.fix(intersect_bam, run.target_bed, run.index2, run.sample_name, run.lib_name)
+        #CPD_ETR.sort(intersect_bam)
+        #CPD_ETR.index(intersect_bam)
         
         #begin indel realignment
-        recoded_bam = CPD_ETR.print_misencoded(intersect_bam, run.target_bed)
-        CPD_ETR.sort(recoded_bam)        
-        CPD_ETR.index(recoded_bam)
+        #recoded_bam = CPD_ETR.print_misencoded(intersect_bam, run.target_bed)
+        #CPD_ETR.sort(recoded_bam)        
+        #CPD_ETR.index(recoded_bam)
 #
 #        intervals = CPD_ETR.intervals(recoded_bam, run.target_bed, run.sample_name, run.out_dir)
 #        realigned_bam = CPD_ETR.realigner(recoded_bam, run.target_bed, intervals)

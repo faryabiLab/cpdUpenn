@@ -95,7 +95,7 @@ def bam_sort(bam):
 def sam2bam(sam):
     try:
         bam_out = sam.replace('sam', 'allseq.bam')
-        subprocess.call(Paths.samtools + ' view -bS ' + sam + ' -o ' + bam_out, shell=True)
+        subprocess.call(Paths.samtools + ' view -bS ' + sam + ' -o ' + bam_out + ' | samtools sort - ' + bam_out, shell=True)
     except:
         LOG_FILE = sam + '.sam2bam_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
