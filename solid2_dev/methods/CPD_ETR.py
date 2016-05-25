@@ -79,7 +79,7 @@ def dedup(aligned_sam, index_file, amplicon_bed):
 def sam2bam(sam):
     try:
         bam_out = sam.replace('sam', 'allseq.bam')
-        subprocess.call(Paths.samtools + ' sort -O bam' + sam + ' -o ' + bam_out, shell=True)
+        subprocess.call(Paths.samtools + ' sort ' + sam + ' -O bam' + sam + ' -o ' + bam_out, shell=True)
     except:
         LOG_FILE = sam + '.sam2bam_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
