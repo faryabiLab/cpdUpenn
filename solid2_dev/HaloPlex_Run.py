@@ -101,9 +101,9 @@ def main():
     run = Solid2.Solid2(sample_name, read1, read2, read_index, index2, out_dir)
     
     aligned_sam = sample_align(run)
+    sample_run(aligned_sam, run, 'allseq')
     sample_run(aligned_sam, run, 'dedup')
-    sample_run(aligned_sam, run, 'allseq')
-    sample_run(aligned_sam, run, 'allseq')
+
     
     #files = glob.glob( (run.out_dir + '/*') )
     #keep_files= ["final","flagstat","depth", "profile", "log", "txt", "sam", "fastq", "properties", "fastqc"]
