@@ -76,12 +76,12 @@ def dedup(aligned_sam, index_file, amplicon_bed):
 # @param1 = sam to be convereted
 #
 # @return = string of bam filename
-def sam2bam(sam):
+def bam_sort(bam):
     try:
-        bam_out = sam.replace('sam', 'allseq.bam')
-        subprocess.call(Paths.samtools + ' sort ' + sam + ' -O bam' + sam + ' -o ' + bam_out, shell=True)
+        bam_out = bam.replace('bam', 'allseq.sort.bam')
+        subprocess.call(Paths.samtools + ' sort ' + bam + ' -o ' + bam_out, shell=True)
     except:
-        LOG_FILE = sam + '.sam2bam_ERROR.log'
+        LOG_FILE = bam + '.bam_sort_ERROR.log'
         logging.basicConfig(filename=LOG_FILE)
         logging.critical(traceback.format_exc())
         sys.exit
@@ -92,7 +92,7 @@ def sam2bam(sam):
 # @param1 = sam to be convereted
 #
 # @return = string of bam filename
-def sam_sort(sam):
+def sam2bam(sam):
     try:
         bam_out = sam.replace('sam', 'allseq.bam')
         subprocess.call(Paths.samtools + ' view -bS ' + sam + ' -o ' + bam_out, shell=True)
