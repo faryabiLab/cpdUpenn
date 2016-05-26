@@ -105,9 +105,9 @@ def main():
     sample_run(aligned_sam, run, 'allseq')
 
     
-    files = glob.glob( (run.out_dir + '/*') )
-    keep_files= ["final","flagstat","depth", "profile", "log", "txt", "sam", "fastq", "properties", "fastqc"]
-    for f in files:
-        if not any(substring in f for substring in keep_files):
-           CPD_ETR.del_file(f)   
+    #files = glob.glob( (run.out_dir + '/*') )
+    #keep_files= ["final","flagstat","depth", "profile", "log", "txt", "sam", "fastq", "properties", "fastqc"]
+    #for f in files:
+    #    if not any(substring in f for substring in keep_files):
+    #       CPD_ETR.del_file(f)   
 main()
