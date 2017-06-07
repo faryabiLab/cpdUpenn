@@ -1,0 +1,5 @@
+SHELL=/bin/bash
+PATH=/project/cpdlab/Scripts/MasterScript_PipelineV2.1.1_hpc:/bin:/usr/bin:/sbin:/usr/sbin:/usr/share/lsf/9.1/linux2.6-glibc2.3-x86_64/bin:/usr/share/lsf/9.1/linux2.6-glibc2.3-x86_64/etc:/usr/local/bin:/usr/local/sbin:/home/bigdelia/bin
+HOME=/home/bigdelia
+
+*/20 * * * * . ~/.bash_profile; HPC_Master.sh /project/cpdlab/Scripts/MasterScript_PipelineV2.1.1_hpc/Run_Config.txt >> /project/cpdlab/Scripts/MasterScript_PipelineV2.1.1_hpc/HPC_Master.out 2>&1

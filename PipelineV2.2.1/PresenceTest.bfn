@@ -1,0 +1,24 @@
+#!/bin/bash
+PresenceTest () 
+{
+file1=$1
+file2=$2;
+if [ $file1 ] && [ $file2 ];
+then
+	if [ -s $file1 ] && [ -s $file2 ];
+	then
+		echo 'Checking of '$file1' and '$file2' went well...continuing with PipeScript..';
+	else
+		echo $file1' and/or '$file2' file are absent or empty. Terminating the PipeScript...';
+		exit 65;
+	fi
+else
+	if [ -s $file1 ];
+	then
+		echo 'Checking of '$file1' went well...continuing with PipeScript..';
+	else
+		echo $file1' file is absent or empty. Terminating the PipeScript...';
+		exit 65;
+	fi
+fi
+}

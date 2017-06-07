@@ -1,0 +1,389 @@
+##V2.2.1
+## Run this script as python Merge.py SampleSheet_forMergeAnalysis.txt RunFolderPath Min_Memory Max_Memory Threads
+## Changes in V1.4:    1) Changed the script name from 'ampliconSummary.py' to 'ampliconSummary_forMergeData.py' in the respective command line.
+##                     2) Changed 'SampleInfo[3]' to 'SampleInfo[2]' to make sure the Barcode_string is calculated as 'SampleInfo[2]+"."+SampleInfo[3]'.
+## Changes in V1.4.2:  1) This script now also makes a new file named "Run_HEME_SamplePairsInfo.txt" which would contain the names of HEME_V1.2 sample, its respective HEMEao_V1.3 pair and the final merged sample (i.e.HEME_V2.3 sample).
+## Changes in V2.0:    1) Added sleep 1m command between variant calling commands.
+##                     2) Added the commands to make Depth.below150x.amplicons_sorted file.
+##                     3) Variants with HRun>6 and  having allele-frequency>=10% are now retained.
+##                     4) samtools, bedtools, snpEff and Annovar tools updated to their new versions.
+##		       5) AnnotationJoin.py's command line was changed to replace hg19.alamut database with hg19.alamut_V1.4.2.DescriptionP1_DescriptionP2(i.e. HEME_V1.2_HEMEao_V1.3) to reflect the most recent version of database specific to HEME panel.
+##                     6) SamplePairsInfoFile.close() command added at the end of the script.
+##                     7) As the new snpeff version yeilds only vcf output, code-lines (involving both snpEff and snpSift {part of snpEff tool}) have been added to process that output vcf to yeild a similar type of tab-delimited text file (same as before but with two additional columns) so that the downstream joining of annotations from other sources/tools, does not get affected much. This is also done to be concordant with the format of variant entries in CPD's KnowledgeBase.
+##Changes in V2.1:             1) GATK version upgraded to 3.4-46. HomopolymerRun Tagging not supported anymore. Hence, removed codes lines related to GATK's HRun Filter and FilterOutHomopolymerVar.py. Therefore, filenames would no more contain the word "HRunTagged" in them.
+##                             2) Added -Djava.io.tmpdir="+RunFolderPath+"/"+"tmp"+" parameter to each GATK command line that did not have it earlier. The argument "-maxAlleles" changed to "-maxAltAlleles" on respective GATK command lines to suit the new version of GATK. The arguments '-K $CPD_GATK_3_4_46/CPD_upenn_gatk.key' and '-et NO_ET' added to each command line to prevent uploading the GATK-run-stats-report to the AWS server.
+##                             3) Changed '-nt "+Threads+"' to '-nt "+Threads+"' and '-Xmx12G' to '-Xmx"+Max_Memory+"' on the command line of GATK's UnifiedGenotyper in order to improve the performance of the process.
+##                             4) -genotypeMergeOptions and -priority arguments added to command line of GATK's CombineVariants tool. The version of GATK now requires that these arguments should be mentioned on commandline. Changed '--variant' to '--variant:variant1 (or variant2 or variant3 or variant4)' on the "CombineVariants" command lines to represent different variant-call-files (i.e. vcfs).
+## Changes in V2.1.1_hpc: 1) Adapting paths for Tools/Scripts to match HPC's folder structure.
+##                        2) Added 'RunFolderPath' argument to the command line.
+##                        3) Added 'SampleCountPairs' list to access counts for the samples.
+##                        4) Now this script also writes 'SAM_BAM_check' and 'PresenceTest' functions to the PipeScript file. As evident from their names, these functions does essential checks at respective steps in the pipeline.
+##                        5) "else" condition added for if [ DescriptionP1=="HEME_V1.2" and DescriptionP2=="HEMEao_V1.3" ] condition. Respective indentations were set. Other indentations were also made consistent with these indentations since this script was edited for the first time using enthought-canopy tool.
+##                        6) Added the command to gzip the raw fastqs. These commands are added towards the end of the PipeScript.
+##                        8) Introduced "flag" variable to let us know if an HEME add on pair is not found for a HEME_V1.2 sample.
+##                        9) Introduced break in the "for loop" which is executed to find the HEME add on pair for a HEME_V1.2 sample to restrict multiple search attempts.
+##                        10) Added "Size_check" function to check the sizes of bams at the respective steps in the pipeline.
+##                        11) The "SAM_BAM_check", "PresenceTest" and "Size_check" functions are not written directly to Sample's PipeScript. They now exists as bash functions (i.e. .bfn files) and are sourced in the Sample's PipeScript.
+## Changes in V2.2 : 1) Adopted Single Heme Analysis. Introduced the functions for necessary steps in the pipeline.
+## Change in V2.2.1 : 1) The path to ConcordanceExtract.sh script is corrected. It was pointing to the PipelineV2.1.1_hpc folder earlier. It is now pointing to PipelineV2.2.1. Consequently the path to other scripts and prerequisites has been changed to be pointing to PipelineV2.2.1 instead of PipelineV2.2.
+##                    2) Introduced Software Modules. The path to each software no more gets defined in this script. A Module_Load function is introduced to load all required software version modules at the start of pipescript of each sample.
+
+import sys              ## importing sys library to be used further in the script
+import subprocess
+SAMPLE_FILE=open(sys.argv[1],'r')  ##Defining a file-handle named "SAMPLE_FILE" to handle the file named "SampleSheet_forMergeAnalysis.txt" that is opened using open command
+RunFolderPath=sys.argv[2]
+Min_Memory=sys.argv[3]
+Max_Memory=sys.argv[4]
+Threads=sys.argv[5]
+
+##Reading all the lines one by one from the SAMPLE_FILE handle and storing them into a list named "Samples"
+Samples=SAMPLE_FILE.readlines()
+Count=0
+
+##Defining all lists to be used later in the code
+Counts=[]
+SampleShortNames=[]
+SampleNames=[]
+Descriptions=[]
+Barcodes=[]
+SamplePairs=[]
+BarcodePairs=[]
+SampleShortNamePairs=[]
+ActualDescriptionPairs=[]
+SampleCountPairs=[]
+
+##Defining the paths for databases used. hg19_alamut is defined later in the code below.
+
+hg19_fasta="/project/cpdlab/Databases/genomes/hg19_genome.fa"
+dbsnp="/project/cpdlab/Databases/dbsnp/hg19_dbsnp137_correct.vcf"
+hg19_1000Genomes="/project/cpdlab/Databases/1000Genomes/hg19.1000genomes.extractFields2.annovar_input"
+FilterAlignScore="/project/cpdlab/Scripts/PipelineV2.2.1/FilterAlignScore.py"
+MakingOfGenotypeGivenAlleles="/project/cpdlab/Scripts/PipelineV2.2.1/MakingOfGenotypeGivenAlleles.sh"
+ampliconSummary_forMergeData="/project/cpdlab/Scripts/PipelineV2.2.1/ampliconSummary_forMergeData.py"
+MakingOfCoverageSummary="/project/cpdlab/Scripts/PipelineV2.2.1/MakingOfCoverageSummary.py"
+RemoveSmallIndels="/project/cpdlab/Scripts/PipelineV2.2.1/RemoveSmallIndels.py"
+MultiAllelic="/project/cpdlab/Scripts/PipelineV2.2.1/MultiAllelic.py"
+refseq="/project/cpdlab/Scripts/PipelineV2.2.1/refseq.py"
+AnnotationJoin="/project/cpdlab/Scripts/PipelineV2.2.1/AnnotationJoin.py"
+flagAdjacentSNPs="/project/cpdlab/Scripts/PipelineV2.2.1/flagAdjacentSNPs.py"
+SummaryStats_forMergeData="/project/cpdlab/Scripts/PipelineV2.2.1/SummaryStats_forMergeData.py"
+RecordsProcessing="/project/cpdlab/Scripts/PipelineV2.2.1/RecordsProcessing.py"
+PrepareSnpEffOut="/project/cpdlab/Scripts/PipelineV2.2.1/PrepareSnpEffOut.py"
+SAM_BAM_check="/project/cpdlab/Scripts/PipelineV2.2.1/SAM_BAM_check.bfn"
+PresenceTest="/project/cpdlab/Scripts/PipelineV2.2.1/PresenceTest.bfn"
+Size_check="/project/cpdlab/Scripts/PipelineV2.2.1/Size_check.bfn"
+paired_end_trim="/project/cpdlab/Scripts/PipelineV2.2.1/paired_end_trim.pl"
+hg19_novoIndex="/project/cpdlab/Databases/genomes/hg19_genome.nix"
+Primers="/project/cpdlab/Scripts/PipelineV2.2.1/Primers/"
+ConcordanceExtract="/project/cpdlab/Scripts/PipelineV2.2.1/ConcordanceExtract.sh"
+
+def ModuleLoad(PipelineScript_FILE):
+    PipelineScript_FILE.write("if [ -f /etc/profile.d/modules.sh ]; then source /etc/profile.d/modules.sh; fi"+"\n")
+    PipelineScript_FILE.write("module load use.own"+"\n")
+    PipelineScript_FILE.write("module load cpd_java7 cpd_bedtools_v2.25.0 cpd_snpEff_v4.1l cpd_vcftools_0.1.14 cpd_Btrim64 cpd_GATK_3.4-46 cpd_novocraft_v3.03.02 cpd_samtools_v1.2 cpd_annovar_ver_17_Jun_2015 cpd_picard_1.46 cpd_cutadapt_v1.3"+"\n")
+
+def CutAdapt(PipelineScript_FILE,Sample,SampleCount,Adapter_R1,Adapter_R2,minLenThrow):
+    PipelineScript_FILE.write("PresenceTest "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R1_001.fastq.gz"+" "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R2_001.fastq.gz"+"\n")
+    PipelineScript_FILE.write("gunzip "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R1_001.fastq.gz"+"\n")
+    PipelineScript_FILE.write("gunzip "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R2_001.fastq.gz"+"\n")
+    PipelineScript_FILE.write("PresenceTest "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R1_001.fastq"+" "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R2_001.fastq"+"\n")
+    
+    ## Cutting Adapters from the sequences in fastqs.
+    PipelineScript_FILE.write("cutadapt"+" -e 0.15 -m "+str(minLenThrow)+" -a "+Adapter_R1+" --paired-output "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R2_001.cutAd.tmp.fastq"+" -o "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R1_001.cutAd.tmp.fastq "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R1_001.fastq "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R2_001.fastq "+"\n")
+    PipelineScript_FILE.write("cutadapt"+" -e 0.15 -m "+str(minLenThrow)+" -a "+Adapter_R2+" --paired-output "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R1_001.cutAd.fastq"+" -o "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R2_001.cutAd.fastq "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R2_001.cutAd.tmp.fastq "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R1_001.cutAd.tmp.fastq "+"\n")
+    PipelineScript_FILE.write("PresenceTest "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R1_001.cutAd.fastq"+" "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R2_001.cutAd.fastq "+"\n")
+def BTrim(PipelineScript_FILE,Sample,SampleCount,PrimersFile,PrimersRCFile,short_limit,eParam):
+    PipelineScript_FILE.write("Btrim64"+" -l "+short_limit+" -p "+PrimersFile+" -t "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R2_001.cutAd.fastq -o "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R2_001.btrim.fastq -s "+RunFolderPath+"/"+Sample+"/"+Sample+"_R2.btrim.summary.txt -w 0 -e "+eParam+" > "+RunFolderPath+"/"+Sample+"/"+Sample+"_R2.btrim.stats.txt"+"\n")
+    PipelineScript_FILE.write("Btrim64"+" -l "+short_limit+" -p "+PrimersRCFile+" -t "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R1_001.cutAd.fastq -o "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R1_001.btrim.fastq -s "+RunFolderPath+"/"+Sample+"/"+Sample+"_R1.btrim.summary.txt -w 0 -e "+eParam+" > "+RunFolderPath+"/"+Sample+"/"+Sample+"_R1.btrim.stats.txt"+"\n")
+    PipelineScript_FILE.write("PresenceTest "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R1_001.btrim.fastq "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R2_001.btrim.fastq"+"\n")
+    PipelineScript_FILE.write("PresenceTest "+RunFolderPath+"/"+Sample+"/"+Sample+"_R1.btrim.summary.txt "+RunFolderPath+"/"+Sample+"/"+Sample+"_R2.btrim.summary.txt "+"\n")
+    PipelineScript_FILE.write(paired_end_trim+" "+RunFolderPath+"/"+Sample+"/"+Sample+"_R1.btrim.summary.txt "+RunFolderPath+"/"+Sample+"/"+Sample+"_R2.btrim.summary.txt "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R1_001.btrim.fastq "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R2_001.btrim.fastq"+"\n")
+    PipelineScript_FILE.write("PresenceTest "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R1_001.btrim.fastq.pe "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R2_001.btrim.fastq.pe"+"\n")
+def ConcordanceEx(PipelineScript_FILE,Sample,SampleCount):
+    PipelineScript_FILE.write(ConcordanceExtract+" "+RunFolderPath+"/"+Sample+" "+SampleCount+" "+"/project/cpdlab/Scripts/PipelineV2.2.1"+"\n")
+    PipelineScript_FILE.write("PresenceTest "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R1_001.cutAd.fastq.tab.sort.cndt.fastq "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R2_001.cutAd.fastq.tab.sort.cndt.fastq"+"\n")
+    PipelineScript_FILE.write("PresenceTest "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R1_001.btrim.fastq.pe.tab.sort.cndt.fastq "+RunFolderPath+"/"+Sample+"/"+Sample+"_"+SampleCount+"_L001_R2_001.btrim.fastq.pe.tab.sort.cndt.fastq"+"\n")
+def MergingFastqs(PipelineScript_FILE,Sample1,Sample1Count,Sample2,Sample2Count,MergeDirectoryName):
+    PipelineScript_FILE.write("(cat "+RunFolderPath+"/"+Sample1+"/"+Sample1+"_"+Sample1Count+"_L001_R1_001.cutAd.fastq.tab.sort.cndt.fastq;"+"cat "+RunFolderPath+"/"+Sample2+"/"+Sample2+"_"+Sample2Count+"_L001_R1_001.cutAd.fastq.tab.sort.cndt.fastq;)"+">"+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+"_L001_R1_001.cutAd.fastq.tab.sort.cndt.fastq"+"\n")
+    PipelineScript_FILE.write("(cat "+RunFolderPath+"/"+Sample1+"/"+Sample1+"_"+Sample1Count+"_L001_R2_001.cutAd.fastq.tab.sort.cndt.fastq;"+"cat "+RunFolderPath+"/"+Sample2+"/"+Sample2+"_"+Sample2Count+"_L001_R2_001.cutAd.fastq.tab.sort.cndt.fastq;)"+">"+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+"_L001_R2_001.cutAd.fastq.tab.sort.cndt.fastq"+"\n")
+    PipelineScript_FILE.write("(cat "+RunFolderPath+"/"+Sample1+"/"+Sample1+"_"+Sample1Count+"_L001_R1_001.btrim.fastq.pe.tab.sort.cndt.fastq;"+"cat "+RunFolderPath+"/"+Sample2+"/"+Sample2+"_"+Sample2Count+"_L001_R1_001.btrim.fastq.pe.tab.sort.cndt.fastq;)"+">"+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+"_L001_R1_001.btrim.fastq.pe.tab.sort.cndt.fastq"+"\n")
+    PipelineScript_FILE.write("(cat "+RunFolderPath+"/"+Sample1+"/"+Sample1+"_"+Sample1Count+"_L001_R2_001.btrim.fastq.pe.tab.sort.cndt.fastq;"+"cat "+RunFolderPath+"/"+Sample2+"/"+Sample2+"_"+Sample2Count+"_L001_R2_001.btrim.fastq.pe.tab.sort.cndt.fastq;)"+">"+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+"_L001_R2_001.btrim.fastq.pe.tab.sort.cndt.fastq"+"\n")
+    PipelineScript_FILE.write("PresenceTest "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+"_L001_R1_001.btrim.fastq.pe.tab.sort.cndt.fastq "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+"_L001_R2_001.btrim.fastq.pe.tab.sort.cndt.fastq"+"\n")
+    PipelineScript_FILE.write("PresenceTest "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+"_L001_R1_001.cutAd.fastq.tab.sort.cndt.fastq "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+"_L001_R2_001.cutAd.fastq.tab.sort.cndt.fastq"+"\n")
+    PipelineScript_FILE.write("(cat "+RunFolderPath+"/"+Sample1+"/"+Sample1+"_"+Sample1Count+"_L001_R1_001.cutAd.fastq;"+"cat "+RunFolderPath+"/"+Sample2+"/"+Sample2+"_"+Sample2Count+"_L001_R1_001.cutAd.fastq;)"+">"+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+"_L001_R1_001.cutAd.fastq"+"\n")
+    PipelineScript_FILE.write("(cat "+RunFolderPath+"/"+Sample1+"/"+Sample1+"_"+Sample1Count+"_L001_R2_001.cutAd.fastq;"+"cat "+RunFolderPath+"/"+Sample2+"/"+Sample2+"_"+Sample2Count+"_L001_R2_001.cutAd.fastq;)"+">"+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+"_L001_R2_001.cutAd.fastq"+"\n")
+    PipelineScript_FILE.write("PresenceTest "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+"_L001_R1_001.cutAd.fastq "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+"_L001_R2_001.cutAd.fastq"+"\n")
+def Sam_To_Bam(PipelineScript_FILE,Sample):
+    PipelineScript_FILE.write("echo 'Converting sam to bam using samtools...\n\n'"+"\n")
+    PipelineScript_FILE.write("samtools"+" view -bS "+RunFolderPath+"/"+Sample+"/"+Sample+".novo.sam > "+RunFolderPath+"/"+Sample+"/"+Sample+".novo.bam"+"\n")
+    PipelineScript_FILE.write("samtools"+" view -bS "+RunFolderPath+"/"+Sample+"/"+Sample+".novo.primer.sam > "+RunFolderPath+"/"+Sample+"/"+Sample+".novo.primer.bam"+"\n")
+    PipelineScript_FILE.write("SAM_BAM_check "+RunFolderPath+"/"+Sample+"/"+Sample+".novo.bam"+" "+RunFolderPath+"/"+Sample+"/"+Sample+".novo.bam_SAM_BAM_check.out"+"\n")
+    PipelineScript_FILE.write("SAM_BAM_check "+RunFolderPath+"/"+Sample+"/"+Sample+".novo.primer.bam"+" "+RunFolderPath+"/"+Sample+"/"+Sample+".novo.primer.bam_SAM_BAM_check.out"+"\n")
+    PipelineScript_FILE.write("Size_check "+RunFolderPath+"/"+Sample+"/"+Sample+".novo.bam"+"\n")
+    PipelineScript_FILE.write("Size_check "+RunFolderPath+"/"+Sample+"/"+Sample+".novo.primer.bam"+"\n")
+def Bam_sort(PipelineScript_FILE,Sample,bam_type):
+    PipelineScript_FILE.write("echo 'Sorting primers-off bam using Novosort...\n\n'"+"\n")
+    PipelineScript_FILE.write("novosort"+" -t "+RunFolderPath+"/"+"tmp -c "+Threads+" "+RunFolderPath+"/"+Sample+"/"+Sample+"."+bam_type+".bam > "+RunFolderPath+"/"+Sample+"/"+Sample+"."+bam_type+".sorted.bam"+"\n")
+    PipelineScript_FILE.write("SAM_BAM_check "+RunFolderPath+"/"+Sample+"/"+Sample+"."+bam_type+".sorted.bam"+" "+RunFolderPath+"/"+Sample+"/"+Sample+"."+bam_type+".sorted.bam_SAM_BAM_check.out"+"\n")
+    PipelineScript_FILE.write("Size_check "+RunFolderPath+"/"+Sample+"/"+Sample+"."+bam_type+".sorted.bam"+"\n")
+def Bam_fix(PipelineScript_FILE,Sample,bam_type,RGLB_String,Barcode):
+    PipelineScript_FILE.write("echo 'Fixing the read group for sorted bam using Picard Tools...\n\n'"+"\n")
+    PipelineScript_FILE.write("java -Xmx"+Min_Memory+" -jar "+"$CPD_PICARD_1_46/AddOrReplaceReadGroups.jar"+" I= "+RunFolderPath+"/"+Sample+"/"+Sample+"."+bam_type+".sorted.bam O= "+RunFolderPath+"/"+Sample+"/"+Sample+"."+bam_type+".sorted.fixed.bam RGID=1 RGLB="+RGLB_String+" RGPL=Illumina RGPU="+Barcode+" RGSM="+Sample+" RGCN=CPD" + "\n")
+    Bam_index(PipelineScript_FILE,Sample,bam_type)
+    PipelineScript_FILE.write("SAM_BAM_check "+RunFolderPath+"/"+Sample+"/"+Sample+"."+bam_type+".sorted.fixed.bam"+" "+RunFolderPath+"/"+Sample+"/"+Sample+"."+bam_type+".sorted.fixed.bam_SAM_BAM_check.out"+"\n")
+def Bam_index(PipelineScript_FILE,Sample,bam_type):
+    PipelineScript_FILE.write("echo 'Indexing fixed bam using Samtools..\n\n'"+"\n")
+    PipelineScript_FILE.write("samtools"+" index "+RunFolderPath+"/"+Sample+"/"+Sample+"."+bam_type+".sorted.fixed.bam" +"\n")
+def Bam_stat(PipelineScript_FILE,Sample,bam_type):
+    PipelineScript_FILE.write("echo 'Creating Flagstat for bam...\n\n'"+"\n")
+    PipelineScript_FILE.write("samtools"+" flagstat "+RunFolderPath+"/"+Sample+"/"+Sample+"."+bam_type+".sorted.fixed.bam > "+RunFolderPath+"/"+Sample+"/"+Sample+"."+bam_type+".sorted.fixed.flagstat"+"\n")
+    
+def Mapping(PipelineScript_FILE,Sample,FragSize,Threads):
+    PipelineScript_FILE.write("echo 'Carrying out Alignment of primer-but-not-adapter containing fastq files with hg19 reference genome using Novoalign...\n\n'"+"\n")
+    PipelineScript_FILE.write("novoalign"+" -d "+hg19_novoIndex+" -f "+RunFolderPath+"/"+Sample+"/"+Sample+"_L001_R1_001.cutAd.fastq.tab.sort.cndt.fastq "+RunFolderPath+"/"+Sample+"/"+Sample+"_L001_R2_001.cutAd.fastq.tab.sort.cndt.fastq -i PE "+FragSize+" -c "+Threads+" -o FullNW -o SAM "+" > "+RunFolderPath+"/"+Sample+"/"+Sample+".novo.primer.sam" +"\n")
+    PipelineScript_FILE.write("SAM_BAM_check "+RunFolderPath+"/"+Sample+"/"+Sample+".novo.primer.sam"+" "+RunFolderPath+"/"+Sample+"/"+Sample+".novo.primer.sam_SAM_BAM_check.out"+"\n")
+    PipelineScript_FILE.write("novoalign"+" -d "+hg19_novoIndex+" -f "+RunFolderPath+"/"+Sample+"/"+Sample+"_L001_R1_001.btrim.fastq.pe.tab.sort.cndt.fastq "+RunFolderPath+"/"+Sample+"/"+Sample+"_L001_R2_001.btrim.fastq.pe.tab.sort.cndt.fastq -i PE "+FragSize+" -c "+Threads+" -o FullNW -o SAM > "+RunFolderPath+"/"+Sample+"/"+Sample+".novo.sam" +"\n")
+    PipelineScript_FILE.write("SAM_BAM_check "+RunFolderPath+"/"+Sample+"/"+Sample+".novo.sam"+" "+RunFolderPath+"/"+Sample+"/"+Sample+".novo.sam_SAM_BAM_check.out"+"\n")
+    Sam_To_Bam(PipelineScript_FILE,Sample)
+    
+        
+##Starting a for loop over the lines contained in the "Samples" list
+for eachsample in Samples:
+    Count=Count+1
+    Counts.append(Count)
+    eachsample=eachsample.rstrip()
+    SampleInfo=eachsample.split(" ")
+    SampleShortNames.append(SampleInfo[0])
+    SampleNames.append(SampleInfo[1])
+    Descriptions.append(SampleInfo[4]+","+SampleInfo[0])
+    Barcode_string=SampleInfo[2]+"."+SampleInfo[3]
+    Barcodes.append(Barcode_string)
+
+##Starting a loop over the Descriptions list to search for HEME_V1.2 samples
+for eachDescription in Descriptions:
+    flag=0
+    if((eachDescription.find("HEME_V1.2"))!=-1):
+        flag=flag+1
+        Description=eachDescription
+        Index=Descriptions.index(Description)       ## Extracting the list-index (from the "Descriptions" list) for the Description that is detected to be HEME_V1.2
+        ActualDescription=Description.split(",")[0]
+        SampleShortName=SampleShortNames[Index]         ## Extracting the SampleShortName for the Sample annotated with HEME_V1.2 description
+        SampleName=SampleNames[Index]                   ## Extracting the SampleName for the Sample annotated with HEME_V1.2 description
+        Barcode=Barcodes[Index]    ## Extracting the Barcode for the Sample annotated with HEME_V1.2 description
+        SampleCount=Counts[Index]
+        searchText=SampleShortName+"-"+"ao"            ## Defining the searchText to search for the current Sample's HemeAddOn partner
+        ##Running an inner for loop to search for the current Sample's HemeAddOn Partener in the SampleShortNames list
+        for l in SampleShortNames:
+            if(l==searchText):
+                aoIndex=SampleShortNames.index(l)
+                ##Confirming the Description annotated for the HemeAddOn Partner
+                if((Descriptions[aoIndex].find("HEMEao_V1.3"))!=-1):
+                    flag=flag+1
+                    ActualDescription_ao=Descriptions[aoIndex].split(",")[0]
+                    SampleName_ao=SampleNames[aoIndex]
+                    Barcode_ao=Barcodes[aoIndex]
+                    SampleShortName_ao=l
+                    SampleCount_ao=Counts[aoIndex]
+                    SamplePairs.append(SampleName+","+SampleName_ao)
+                    BarcodePairs.append(Barcode+","+Barcode_ao)
+                    SampleShortNamePairs.append(SampleShortName+","+SampleShortName_ao)
+                    ActualDescriptionPairs.append(ActualDescription+","+ActualDescription_ao)
+                    SampleCountPairs.append(str(SampleCount)+","+str(SampleCount_ao))
+                    break
+                else:
+                    sys.exit("Error in the SampleSheet_forMergeAnalysis.txt")
+            else:
+                continue
+        if(flag!=2):
+            print "HEME add on pair not found for HEME_V1.2 sample "+SampleShortName+"\n"
+    else:
+        continue
+
+SamplePairsInfoFile=open(RunFolderPath+"/"+"Run_HEME_SamplePairsInfo.txt",'w')
+for eachSamplePair in SamplePairs:
+    SampleP1=eachSamplePair.split(",")[0]
+    SampleP2=eachSamplePair.split(",")[1]
+    eachSamplePairIndex=SamplePairs.index(eachSamplePair)
+    eachActualDescriptionPair=ActualDescriptionPairs[eachSamplePairIndex]
+    DescriptionP1=eachActualDescriptionPair.split(",")[0]
+    DescriptionP2=eachActualDescriptionPair.split(",")[1]
+    eachSampleCountPair=SampleCountPairs[eachSamplePairIndex]
+    SampleP1Count="S"+eachSampleCountPair.split(",")[0]
+    SampleP2Count="S"+eachSampleCountPair.split(",")[1]
+    if(DescriptionP1=="HEME_V1.2" and DescriptionP2=="HEMEao_V1.3"):
+        FragSize="190,50"
+        Library="TSCA"
+        PrimersFileP1=Primers+"PrimersHEMEv1.2.txt"
+        PrimersRCFileP1=Primers+"Primers_RC_HEMEv1.2.txt"
+        PrimersFileP2=Primers+"PrimersHEMEao_v1.3.txt"
+        PrimersRCFileP2=Primers+"Primers_RC_HEMEao_v1.3.txt"
+        eParam="190"
+        Adapter_R1="GCGAATTTCGACGATCGTTGCATTAACTCGCGA"
+    	Adapter_R2="AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT"
+    	minLenThrow=31
+    	novoalignVer="3.03.02"
+    	short_limit="25"
+    	FragSize="190,50"
+        minIndelFrac="0.04"
+        minIndelCount="3"
+        BED_FILE="/project/cpdlab/Scripts/PipelineV2.2.1/"+Library+"_"+"CANCER_PANEL_"+"HEME_V2.3"+"_target.BED"
+        BED_FILE_PrimersOn="/project/cpdlab/Scripts/PipelineV2.2.1/"+Library+"_"+"CANCER_PANEL_"+"HEME_V2.3"+"_target_PrimersOn.BED"
+        hg19_alamut="/project/cpdlab/Databases/Alalmut/hg19.alamut_V1.4.2."+DescriptionP1+"_"+DescriptionP2
+        RGLB_String=Library+"_"+"HEME_V2.3"
+        RGPU_string=BarcodePairs[eachSamplePairIndex]
+        ShortNameForP1=SampleShortNamePairs[eachSamplePairIndex].split(",")[0]
+        MergeDirectoryName=ShortNameForP1+"_merged"
+        SamplePairsInfoFile.write(SampleP1+","+SampleP2+","+MergeDirectoryName+"\n")
+        process1=subprocess.Popen(['mkdir',RunFolderPath+"/"+MergeDirectoryName],stdout=subprocess.PIPE).communicate()[0]
+        MergePipeScriptFileName=RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+"."+"PipeScript"
+        PipelineScript_FILE=open(MergePipeScriptFileName,'w')
+        # Writing Functions
+        PipelineScript_FILE.write("#!/bin/bash"+"\n")
+        ModuleLoad(PipelineScript_FILE)
+        PipelineScript_FILE.write(". "+SAM_BAM_check+"\n")
+        PipelineScript_FILE.write(". "+PresenceTest+"\n")
+        PipelineScript_FILE.write(". "+Size_check+"\n")
+        CutAdapt(PipelineScript_FILE,SampleP1,SampleP1Count,Adapter_R1,Adapter_R2,minLenThrow)
+        CutAdapt(PipelineScript_FILE,SampleP2,SampleP2Count,Adapter_R1,Adapter_R2,minLenThrow)
+        BTrim(PipelineScript_FILE,SampleP1,SampleP1Count,PrimersFileP1,PrimersRCFileP1,short_limit,eParam)
+        BTrim(PipelineScript_FILE,SampleP2,SampleP2Count,PrimersFileP2,PrimersRCFileP2,short_limit,eParam)
+        ConcordanceEx(PipelineScript_FILE,SampleP1,SampleP1Count)
+        ConcordanceEx(PipelineScript_FILE,SampleP2,SampleP2Count)
+        MergingFastqs(PipelineScript_FILE,SampleP1,SampleP1Count,SampleP2,SampleP2Count,MergeDirectoryName)
+    	#   Mapping- processing of reads containing primer but not adapter sequences
+    	Mapping(PipelineScript_FILE,MergeDirectoryName,FragSize,Threads)
+    	Bam_sort(PipelineScript_FILE,MergeDirectoryName,"novo")
+    	Bam_sort(PipelineScript_FILE,MergeDirectoryName,"novo.primer")
+    	Bam_fix(PipelineScript_FILE,MergeDirectoryName,"novo",RGLB_String,Barcode)
+    	Bam_fix(PipelineScript_FILE,MergeDirectoryName,"novo.primer",RGLB_String,Barcode)
+    	Bam_stat(PipelineScript_FILE,MergeDirectoryName,"novo")
+    	Bam_stat(PipelineScript_FILE,MergeDirectoryName,"novo.primer")
+    	PipelineScript_FILE.write("echo 'Intersecting target bed with primers-on bam...\n\n'"+"\n")
+        PipelineScript_FILE.write("intersectBed"+" -abam "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.primer.sorted.fixed.bam -b "+BED_FILE+" > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.primer.sorted.fixed.ontarget.bam" + "\n")
+        PipelineScript_FILE.write("SAM_BAM_check "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.primer.sorted.fixed.ontarget.bam"+" "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.primer.sorted.fixed.ontarget.bam_SAM_BAM_check.out"+"\n")
+        PipelineScript_FILE.write("Size_check "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.primer.sorted.fixed.ontarget.bam"+"\n")
+        PipelineScript_FILE.write("echo 'Indexing on target fixed bam using Samtools..\n\n'"+"\n")
+        PipelineScript_FILE.write("samtools"+" index "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.primer.sorted.fixed.ontarget.bam" +"\n")
+        PipelineScript_FILE.write("echo 'Creating Flagstat for sorted.fixed.ontarget.bam...\n\n'"+"\n")
+        PipelineScript_FILE.write("samtools"+" flagstat "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.primer.sorted.fixed.ontarget.bam > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.primer.sorted.fixed.ontarget.flagstat"+"\n")
+        
+        PipelineScript_FILE.write("echo 'Intersecting target bed with bam...\n\n'"+"\n")
+        PipelineScript_FILE.write("intersectBed"+" -abam "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.bam -b "+BED_FILE_PrimersOn+" > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.bam" + "\n")
+        PipelineScript_FILE.write("SAM_BAM_check "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.bam"+" "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.bam_SAM_BAM_check.out"+"\n")
+        PipelineScript_FILE.write("Size_check "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.bam"+"\n")
+        PipelineScript_FILE.write("echo 'Indexing on target fixed bam using Samtools..\n\n'"+"\n")
+        PipelineScript_FILE.write("samtools"+" index "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.bam" +"\n")
+        PipelineScript_FILE.write("echo 'Creating Flagstat for sorted.fixed.ontarget.bam...\n\n'"+"\n")
+        PipelineScript_FILE.write("samtools"+" flagstat "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.bam > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.flagstat"+"\n")
+        
+        PipelineScript_FILE.write("echo 'Samtools filtering of ontarget bam using minimum mapping quality cutoff of 40 for reads...\n\n'"+"\n")
+        PipelineScript_FILE.write("samtools"+" view -h -q 40 "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.bam > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.q40.sam"+"\n")
+        PipelineScript_FILE.write("SAM_BAM_check "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.q40.sam"+" "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.q40.sam_SAM_BAM_check.out"+"\n")
+        PipelineScript_FILE.write("echo 'Running "+FilterAlignScore+" to further filter the reads using minimum alignment score cutoff of 95...\n\n'"+"\n")
+        PipelineScript_FILE.write("python "+FilterAlignScore+" "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.q40.sam "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.q40.as95.sam" + "\n")
+        PipelineScript_FILE.write("SAM_BAM_check "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.q40.as95.sam"+" "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.q40.as95.sam_SAM_BAM_check.out"+"\n")
+        PipelineScript_FILE.write("echo 'Converting filtered sam to bam using Samtools...\n\n'"+"\n")
+        PipelineScript_FILE.write("samtools"+" view -bS "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.q40.as95.sam > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.afterFilter.bam" + "\n")
+        PipelineScript_FILE.write("SAM_BAM_check "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.afterFilter.bam"+" "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.afterFilter.bam_SAM_BAM_check.out"+"\n")
+        PipelineScript_FILE.write("echo 'Creating Flagstat for filtered bam...\n\n'"+"\n")
+        PipelineScript_FILE.write("samtools"+" flagstat "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.afterFilter.bam > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.afterFilter.flagstat" + "\n")
+        PipelineScript_FILE.write("echo 'Indexing filtered bam using Samtools..\n\n'"+"\n")
+        PipelineScript_FILE.write("samtools"+" index "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.afterFilter.bam" +"\n")
+        PipelineScript_FILE.write("echo 'Soft Clipping the end of reads...\n\n'"+"\n")
+        PipelineScript_FILE.write("$CPD_JAVA7 -Xmx"+Min_Memory+" -Djava.io.tmpdir="+RunFolderPath+"/"+"tmp"+" -jar "+"$CPD_GATK_3_4_46/GenomeAnalysisTK.jar"+" -T ClipReads -K $CPD_GATK_3_4_46/CPD_upenn_gatk.key -et NO_ET -I "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.afterFilter.bam  -o "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.afterFilter.clipped.bam -os "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".clippingstats.txt -R "+hg19_fasta+" -CR SOFTCLIP_BASES -QT 22"+"\n")
+        PipelineScript_FILE.write("SAM_BAM_check "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.afterFilter.clipped.bam"+" "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.afterFilter.clipped.bam_SAM_BAM_check.out"+"\n")
+        PipelineScript_FILE.write("Size_check "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.afterFilter.clipped.bam"+"\n")
+        PipelineScript_FILE.write("echo 'Indexing clipped bam using Samtools..\n\n'"+"\n")
+        PipelineScript_FILE.write("samtools"+" index "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.afterFilter.clipped.bam" +"\n")
+        PipelineScript_FILE.write("echo 'Creating Flagstat for filtered.clipped bam...\n\n'"+"\n")
+        PipelineScript_FILE.write("samtools"+" flagstat "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.afterFilter.clipped.bam > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.afterFilter.clipped.flagstat" + "\n")
+	PipelineScript_FILE.write("echo 'Running GATK DepthOfCoverage on merged bam..\n\n'"+"\n")
+	PipelineScript_FILE.write("$CPD_JAVA7 -Xmx"+Min_Memory+" -Djava.io.tmpdir="+RunFolderPath+"/"+"tmp"+" -jar "+"$CPD_GATK_3_4_46/GenomeAnalysisTK.jar"+" -T DepthOfCoverage -K $CPD_GATK_3_4_46/CPD_upenn_gatk.key -et NO_ET -o "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth -I "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.afterFilter.clipped.bam --minBaseQuality 22 -baseCounts -ct 0 -ct 1 -ct 250 -ct 1000 -L "+BED_FILE+" -R "+hg19_fasta+ "\n")
+	PipelineScript_FILE.write("echo 'Running MakingOfGenotypeGivenAlleles.sh script to create the GenotypeGivenAlleles file , the .Depth.below250X.vcf file and the .DepthForAnnotation File..\n\n'"+"\n")
+	
+	PipelineScript_FILE.write(MakingOfGenotypeGivenAlleles+" "+RunFolderPath+"/"+MergeDirectoryName+" /project/cpdlab/Databases/RefBases/hg19.ref."+DescriptionP1+"_"+DescriptionP2+" "+RecordsProcessing+"\n")
+	PipelineScript_FILE.write("echo 'Intersecting the .Depth.below250X.vcf with the target bed file to get the target regions having reads with depth below 250..\n\n'"+"\n")
+	PipelineScript_FILE.write("intersectBed"+" -a "+BED_FILE+"_refseq_intersect.BED -b "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth.below250X.vcf -u > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth.below250X.amplicons" + "\n")
+	#PipelineScript_FILE.write("intersectBed"+" -a "+BED_FILE_for_P2+"_refseq_intersect.BED -b "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth.below250X.vcf -u > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth.below250X."+DescriptionP2+".amplicons" + "\n")
+	#PipelineScript_FILE.write("(cat "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth.below250X."+DescriptionP1+".amplicons"+";"+"cat "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth.below250X."+DescriptionP2+".amplicons"+")"+" > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth.below250X.amplicons"+"\n")
+	PipelineScript_FILE.write("sort "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth.below250X.amplicons"+" > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth.below250X.amplicons_sorted"+"\n")
+	PipelineScript_FILE.write("intersectBed"+" -a "+BED_FILE+"_refseq_intersect.BED -b "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth.below150X.vcf -u > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth.below150X.amplicons" + "\n")
+	#PipelineScript_FILE.write("intersectBed"+" -a "+BED_FILE_for_P2+"_refseq_intersect.BED -b "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth.below150X.vcf -u > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth.below150X."+DescriptionP2+".amplicons" + "\n")
+	#PipelineScript_FILE.write("(cat "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth.below150X."+DescriptionP1+".amplicons"+";"+"cat "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth.below150X."+DescriptionP2+".amplicons"+")"+" > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth.below150X.amplicons"+"\n")
+	PipelineScript_FILE.write("sort "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth.below150X.amplicons"+" > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".Depth.below150X.amplicons_sorted"+"\n")
+	PipelineScript_FILE.write("echo 'Creating Depth.below250X(and 150X).amplicons_sorted.summary file..\n\n'"+"\n")
+	PipelineScript_FILE.write("python "+ampliconSummary_forMergeData+" "+RunFolderPath+"/"+MergeDirectoryName+"\n")
+	PipelineScript_FILE.write("python "+MakingOfCoverageSummary+" "+RunFolderPath+"/"+MergeDirectoryName+" "+DescriptionP1+"_"+DescriptionP2+"\n")
+	##Variant Calling
+	PipelineScript_FILE.write("echo 'Running GATK Variant Call in Discovery mode..\n\n'"+"\n")
+	PipelineScript_FILE.write("$CPD_JAVA7 -Xmx"+Max_Memory+" -Djava.io.tmpdir="+RunFolderPath+"/"+"tmp"+" -jar "+"$CPD_GATK_3_4_46/GenomeAnalysisTK.jar"+" -R "+hg19_fasta+" -K $CPD_GATK_3_4_46/CPD_upenn_gatk.key -et NO_ET -T UnifiedGenotyper -I "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.afterFilter.clipped.bam --dbsnp "+dbsnp+" -o "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".GATK.vcf -nt "+Threads+" -glm BOTH -mbq 22 -dt NONE -minIndelCnt "+minIndelCount+" -minIndelFrac "+minIndelFrac+" -nda -maxAltAlleles 5 -stand_emit_conf 10.0 -L "+BED_FILE+"\n")
+	PipelineScript_FILE.write("echo 'waiting for 1 minute before executing next command'"+"\n")
+	PipelineScript_FILE.write("sleep 1m"+"\n")
+	# calling 6bp or larger on a pre-filtered bam file not containing primers
+	PipelineScript_FILE.write("echo 'Running GATK Variant Call in Discovery mode on PRE_FILTERED Target Merged Bam file..\n\n'"+"\n")
+	PipelineScript_FILE.write("$CPD_JAVA7 -Xmx"+Max_Memory+" -Djava.io.tmpdir="+RunFolderPath+"/"+"tmp"+" -jar "+"$CPD_GATK_3_4_46/GenomeAnalysisTK.jar"+" -R "+hg19_fasta+" -K $CPD_GATK_3_4_46/CPD_upenn_gatk.key -et NO_ET -T UnifiedGenotyper -I "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.bam --dbsnp "+dbsnp+" -o "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".GATK.pre_filtered.vcf -nt "+Threads+" -glm INDEL -mbq 22 -dt NONE -minIndelCnt "+minIndelCount+" -minIndelFrac "+minIndelFrac+" -nda -maxAltAlleles 5 -stand_emit_conf 10.0 -L "+BED_FILE+"\n")
+	PipelineScript_FILE.write("echo 'waiting for 1 minute before executing next command'"+"\n")
+	PipelineScript_FILE.write("sleep 1m"+"\n")
+	PipelineScript_FILE.write("echo 'Remove Small Indels (i.e. less than 6bp) from the GATK.pre_filtered.vcf file ..\n\n'"+"\n")
+	PipelineScript_FILE.write("python "+RemoveSmallIndels+" "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".GATK.pre_filtered.vcf "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".GATK.pre_filtered.greaterThan6bpIndels.vcf "+"\n")
+	# calling 6bp or larger on a pre-filtered bam file containing primers
+	PipelineScript_FILE.write("echo 'Running GATK Variant Call in Discovery mode on PRIMERS-ON-PRE_FILTERED Target Bam file..\n\n'"+"\n")
+	PipelineScript_FILE.write("$CPD_JAVA7 -Xmx"+Max_Memory+" -Djava.io.tmpdir="+RunFolderPath+"/"+"tmp"+" -jar "+"$CPD_GATK_3_4_46/GenomeAnalysisTK.jar"+" -R "+hg19_fasta+" -K $CPD_GATK_3_4_46/CPD_upenn_gatk.key -et NO_ET -T UnifiedGenotyper -I "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.primer.sorted.fixed.ontarget.bam --dbsnp "+dbsnp+" -o "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".GATK.primer.pre_filtered.vcf -nt "+Threads+" -glm INDEL -mbq 22 -dt NONE -minIndelCnt "+minIndelCount+" -minIndelFrac "+minIndelFrac+" -nda -maxAltAlleles 5 -stand_emit_conf 10.0 -L "+BED_FILE_PrimersOn+"\n")
+	PipelineScript_FILE.write("echo 'waiting for 1 minute before executing next command'"+"\n")
+	PipelineScript_FILE.write("sleep 1m"+"\n")
+	PipelineScript_FILE.write("echo 'Remove Small Indels (i.e. less than 6bp) from the GATK.primer.pre_filtered.vcf file ..\n\n'"+"\n")
+	PipelineScript_FILE.write("python "+RemoveSmallIndels+" "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".GATK.primer.pre_filtered.vcf "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".GATK.primer.pre_filtered.greaterThan6bpIndels.vcf "+"\n")
+	# calling SNVs in GenotypeGivenAlleles mode
+	PipelineScript_FILE.write("echo 'Running GATK Variant Call in GenotypeGivenAlleles mode..\n\n'"+"\n")
+	PipelineScript_FILE.write("$CPD_JAVA7 -Xmx"+Max_Memory+" -Djava.io.tmpdir="+RunFolderPath+"/"+"tmp"+" -jar "+"$CPD_GATK_3_4_46/GenomeAnalysisTK.jar"+" -R "+hg19_fasta+" -K $CPD_GATK_3_4_46/CPD_upenn_gatk.key -et NO_ET -T UnifiedGenotyper -I "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.afterFilter.clipped.bam --dbsnp "+dbsnp+" -o "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".GATK.af4percent.vcf -nt "+Threads+" -glm SNP -mbq 22 -dt NONE -alleles:VCF "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".GenotypeGivenAlleles.sorted.vcf -gt_mode GENOTYPE_GIVEN_ALLELES -out_mode EMIT_ALL_SITES -stand_emit_conf 10.0 -L "+BED_FILE+"\n")
+	PipelineScript_FILE.write("echo 'waiting for 1 minute before executing next command'"+"\n")
+	PipelineScript_FILE.write("sleep 1m"+"\n")
+	# combining all variant calls together
+	PipelineScript_FILE.write("PresenceTest "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".GATK.vcf"+" "+"\n")
+	PipelineScript_FILE.write("PresenceTest "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".GATK.af4percent.vcf"+" "+"\n")
+	PipelineScript_FILE.write("PresenceTest "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".GATK.pre_filtered.greaterThan6bpIndels.vcf"+" "+"\n")
+	PipelineScript_FILE.write("PresenceTest "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".GATK.primer.pre_filtered.greaterThan6bpIndels.vcf"+" "+"\n")
+	PipelineScript_FILE.write("echo 'Combining all four GATK Variant Calls to give a combined.vcf file..\n\n'"+"\n")
+	PipelineScript_FILE.write("$CPD_JAVA7 -Xmx"+Min_Memory+" -Djava.io.tmpdir="+RunFolderPath+"/"+"tmp"+" -jar "+"$CPD_GATK_3_4_46/GenomeAnalysisTK.jar"+" -R "+hg19_fasta+" -T CombineVariants -K $CPD_GATK_3_4_46/CPD_upenn_gatk.key -et NO_ET --variant:variant1 "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".GATK.vcf --variant:variant2 "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".GATK.af4percent.vcf --variant:variant3 "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".GATK.pre_filtered.greaterThan6bpIndels.vcf --variant:variant4 "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".GATK.primer.pre_filtered.greaterThan6bpIndels.vcf -genotypeMergeOptions PRIORITIZE -priority variant3,variant4,variant2,variant1 -o "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.vcf"+"\n")
+	PipelineScript_FILE.write("PresenceTest "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.vcf"+" "+"\n")
+	# Filtering the variants
+	#PipelineScript_FILE.write("echo 'Filtering (tagging) Variants called at Homopolymer sites..\n\n'"+"\n")
+	#PipelineScript_FILE.write("$CPD_JAVA7 -Xmx"+Min_Memory+" -Djava.io.tmpdir="+RunFolderPath+"/"+"tmp"+" -jar "+"$CPD_GATK_3_4_46/GenomeAnalysisTK.jar"+" -R "+hg19_fasta+" -K $CPD_GATK_3_4_46/CPD_upenn_gatk.key -et NO_ET -T VariantFiltration --variant "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.vcf -o "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.vcf -dt NONE --filterName 'HomopolymerRun' --filterExpression 'HRun>6'" + "\n")
+	#PipelineScript_FILE.write("echo 'grepping all variants not called at Homoploymer sites for further annotation..\n\n'"+"\n")
+	#PipelineScript_FILE.write("grep -v 'HomopolymerRun' "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.filtered.vcf > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.vcf"+"\n")
+	# Annotating the variants
+	PipelineScript_FILE.write("echo 'Running SnpEff Annotation--with canon option activated..\n\n'"+"\n")
+	PipelineScript_FILE.write("$CPD_JAVA7 -jar "+"$CPD_SNPEFF_4_1l/snpEff.jar"+" -c "+"$CPD_SNPEFF_4_1l/snpEff.config"+" -canon hg19 -i vcf -o vcf -noStats "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.vcf > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.canon_snpeff.vcf"+"\n")
+	PipelineScript_FILE.write("$CPD_JAVA7 -jar "+"$CPD_SNPEFF_4_1l/SnpSift.jar"+" varType "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.canon_snpeff.vcf > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.canon_snpeff.vT.vcf"+"\n")
+	PipelineScript_FILE.write("$CPD_JAVA7 -jar "+"$CPD_SNPEFF_4_1l/SnpSift.jar"+" extractFields "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.canon_snpeff.vT.vcf CHROM POS ID REF ALT QUAL FILTER DP ANN HET HOM VARTYPE >"+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.canon_snpeff.vT.ex.txt"+"\n")
+	PipelineScript_FILE.write("python "+PrepareSnpEffOut+" "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.canon_snpeff.vT.ex.txt "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.canon_snpeff.vT.ex.tab"+"\n")
+	PipelineScript_FILE.write("echo 'Running MultiAllelic.py script on the filtered.HRunRemoved.vcf to convert all mutiallelic position to single allelic ones..\n\n'"+"\n")
+	PipelineScript_FILE.write("python "+MultiAllelic+" "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.vcf "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.multiallelic.vcf"+"\n")
+	PipelineScript_FILE.write("echo 'Running Annovar Refseq Annotation..\n\n'"+"\n")
+	PipelineScript_FILE.write("perl "+"$CPD_ANNOVAR_v_17_Jun_2015/convert2annovar.pl"+"  -format vcf4old -includeinfo "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.multiallelic.vcf > "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.multiallelic.avinput"+"\n")
+	PipelineScript_FILE.write("perl "+"$CPD_ANNOVAR_v_17_Jun_2015/annotate_variation.pl"+" "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.multiallelic.avinput "+"$CPD_ANNOVAR_v_17_Jun_2015/humandb/ -buildver hg19"+"\n")
+	PipelineScript_FILE.write("python "+refseq+" "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.multiallelic.avinput.variant_function "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.multiallelic.avinput.exonic_variant_function "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.multiallelic.avinput.refseq"+"\n")
+	PipelineScript_FILE.write("echo 'Joining All Annotations..\n\n'"+"\n")
+	PipelineScript_FILE.write("python "+AnnotationJoin+" "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.canon_snpeff.vT.ex.tab "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".combined.multiallelic.avinput.refseq "+hg19_1000Genomes+" "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".DepthForAnnotation.sorted.vcf "+hg19_alamut+" "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".canon_annotated"+"\n")
+	PipelineScript_FILE.write("echo 'Flagging Adjacent Snps..\n\n'"+"\n")
+	PipelineScript_FILE.write("python "+flagAdjacentSNPs+" "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".canon_annotated "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".canon_annotated_flagged "+"\n")
+	#PipelineScript_FILE.write("python FilterOutHomopolymerVar.py "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".canon_annotated_flagged "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".canon_annotated_flagged.HRR "+"\n")
+	# Creating SummaryStats File
+	PipelineScript_FILE.write("echo 'Creating Stats file for the sample..\n\n'"+"\n")
+	PipelineScript_FILE.write("python "+SummaryStats_forMergeData+" "+RunFolderPath+"/"+MergeDirectoryName+"\n")
+	PipelineScript_FILE.write("gzip "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+"_L001_R1_001.cutAd.fastq"+"\n")
+	PipelineScript_FILE.write("gzip "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+"_L001_R2_001.cutAd.fastq"+"\n")
+	PipelineScript_FILE.write("mv "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".canon_annotated* "+RunFolderPath+"/"+"\n")
+	PipelineScript_FILE.write("mv "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ba* "+RunFolderPath+"/"+"\n")
+	PipelineScript_FILE.write("mv "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.primer.sorted.fixed.ontarget.ba* "+RunFolderPath+"/"+"\n")
+	PipelineScript_FILE.write("mv "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.afterFilter.clipped.ba* "+RunFolderPath+"/"+"\n")
+	PipelineScript_FILE.write("mv "+RunFolderPath+"/"+MergeDirectoryName+"/"+MergeDirectoryName+".novo.sorted.fixed.ontarget.ba* "+RunFolderPath+"/"+"\n")
+	PipelineScript_FILE.close()
+    else:
+        continue
+
+SAMPLE_FILE.close()
+SamplePairsInfoFile.close()
+	
+    	
+  
