@@ -1,3 +1,0 @@
-(cat TSCA_CANCER_PANEL_HEME_V1.2_target.BED; cat TSCA_CANCER_PANEL_HEMEao_V1.3_target.BED)|awk '{OFS="\t";print $1,$2,$3}'> TSCA_CANCER_PANEL_HEME_V2.3_target.BED
-bedtools sort -i TSCA_CANCER_PANEL_HEME_V2.3_target.BED > TSCA_CANCER_PANEL_HEME_V2.3_target.sort.BED
-bedtools merge -i TSCA_CANCER_PANEL_HEME_V2.3_target.sort.BED > TSCA_CANCER_PANEL_HEME_V2.3_target.sort.merge.BED
