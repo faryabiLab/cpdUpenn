@@ -1,2 +1,4 @@
 # cpdUpenn
-Halo_v1.2 Clinical Pipeline
+Intial push of EGFR Clinical Pipeline
+MUST BE RUN USING CPD VIRTUAL MACHINE
+DEPRECATE ASAP
