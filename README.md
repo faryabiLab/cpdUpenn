@@ -1,4 +1,4 @@
 # cpdUpenn
-Intial push of EGFR Clinical Pipeline
+EGFR Clinical Pipeline
 MUST BE RUN USING CPD VIRTUAL MACHINE
 DEPRECATE ASAP
