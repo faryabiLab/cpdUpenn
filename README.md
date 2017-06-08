@@ -1,4 +1,2 @@
 # cpdUpenn
-EGFR Clinical Pipeline
-MUST BE RUN USING CPD VIRTUAL MACHINE
-DEPRECATE ASAP
+This branch is used for all archived pipelines
