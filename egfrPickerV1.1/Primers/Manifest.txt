@@ -1,9 +1,0 @@
-EGFR_exon1_intron1	chr7
-EGFR_exon1_exon2	chr7
-EGFR_exon1_exon8	chr7 
-HPRT4	chrX
-SDHA	chrX
-RPL13A	chrX
-EGFR_exon9_exon12	chr7
-EGFR_exon9_exon10	chr7
-EGFR_exon9_exon9	chr7
