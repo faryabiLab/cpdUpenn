@@ -189,17 +189,6 @@ realigned_bam_sort=${B}.realign.srt.bam
 # Realignment target creator
 ${java8} -Xmx${mem}g -Djava.io.tmpdir=${tmp} -jar ${GATK2} -T RealignerTargetCreator -R ${db_fa} -I ${dedup_fix_clean_sort} -o ${realign_intv} -L ${target_bed} -known /project/cpdlab/ashkan/muTect/Mills_and_1000G_gold_standard.indels.ucsc.hg19.sites.vcf -known /project/cpdlab/Databases/GATK/bundle/2.8/hg19/1000G_phase1.indels.hg19.sites.vcf
 
-after_recal_table=${B}.after_recal.grp
-recal_plot=${B}_recal.pdf
-${java8} -Xmx${mem}g -Djava.io.tmpdir=${tmp} -jar ${GATK2} -T BaseRecalibrator -R ${db_fa} -nct ${cpu} -knownSites /project/cpdlab/ashkan/muTect/Mills_and_1000G_gold_standard.indels.ucsc.hg19.sites.vcf -knownSites /project/cpdlab/Databases/GATK/bundle/2.8/hg19/1000G_phase1.indels.hg19.sites.vcf -knownSites /project/cpdlab/Databases/GATK/bundle/2.8/hg19/dbsnp_138.hg19.vcf -L ${target_bed} -I ${realigned_bam_sort} -o ${recal_table}
-
-${java8} -Xmx${mem}g -Djava.io.tmpdir=${tmp} -jar ${GATK2} -T PrintReads -R ${db_fa} -L ${target_bed} -nct ${cpu} -I ${realigned_bam_sort} -BQSR ${recal_table} -o ${recal_bam}
-
-${samtools} sort -m 32000000000 ${recal_bam} -o ${recal_sort_bam}
-${samtools} index ${recal_sort_bam}
-
-# plot recallibration effect
-
 ${java8} -Xmx${mem}g -Djava.io.tmpdir=${tmp} -jar ${GATK2} -T BaseRecalibrator -R ${db_fa} -nct ${cpu} -knownSites /project/cpdlab/ashkan/muTect/Mills_and_1000G_gold_standard.indels.ucsc.hg19.sites.vcf -knownSites /project/cpdlab/Databases/GATK/bundle/2.8/hg19/1000G_phase1.indels.hg19.sites.vcf -knownSites /project/cpdlab/Databases/GATK/bundle/2.8/hg19/dbsnp_138.hg19.vcf -L ${target_bed} -I ${realigned_bam_sort} -BQSR ${recal_table} -o ${after_recal_table}
 
 ${java8} -Xmx${mem}g -Djava.io.tmpdir=${tmp} -jar ${GATK2} -T AnalyzeCovariates -R ${db_fa} -before ${recal_table} -after ${after_recal_table} -plots ${recal_plot}
@@ -378,6 +367,17 @@ stats_out=${B}.Stats
 python ${sample_stats} ${B} ${B}.sam.stat ${B}.nodup.stat ${B}_final.stat ${B}.target.depth.sample_summary ${B}.target.depth.sample_interval_summary ${stats_out}
 
 amps=${B}.amps.tsv
+python ${amp_calc} ${B}.hotspots.depth.sample_interval_summary ${B}.target.depth.sample_summary ${normal_amps} ${amps} ${B}
+
+#previously generated files contain "#" in header to be awked for combination
+variants=${B}.onco_parsed.tsv
+stats=${B}.Stats
+depths=${B}.target.depth.MeanCovByPosition
+
+variants_upload=${B}.variants.upload
+stats_upload=${B}.stats.upload
+depths_upload=${B}.depths.upload
+
 python ${amp_calc} ${B}.hotspots.depth.sample_interval_summary ${B}.target.depth.sample_summary ${normal_amps} ${amps} ${B}
 
 #previously generated files contain "#" in header to be awked for combination
