@@ -116,7 +116,6 @@ mv ${out_dir}/${SampleName}.R1.*_Cut_0.fastq.gz  ${out_dir}/${SampleName}.R1.cut
 mv ${out_dir}/${SampleName}.R3.*_Cut_0.fastq.gz  ${out_dir}/${SampleName}.R3.cut.fastq.gz
 
 
-
 #### Align ####
 trim_fq1=${SampleName}.R1.cut.fastq.gz
 trim_fq2=${SampleName}.R3.cut.fastq.gz
