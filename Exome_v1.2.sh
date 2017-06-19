@@ -8,10 +8,13 @@
 
 ################## Data Bases ########
 ## Databases
-db_fa='/project/cpdlab/ashkan/muTect/ucsc.hg19.fasta'
-db_snp='/project/cpdlab/ashkan/muTect/dbsnp_137.hg19.vcf'
-db_cosmic='/project/cpdlab/ashkan/muTect/cosmic_v67.hg19.vcf'
+db_fa='/project/cpdlab/Databases/BWA_ucsc/ucsc.hg19.fasta'
+db_snp='/project/cpdlab/Databases/dbsnp/dbsnp_137.hg19.s2.vcf'
 db_onco='/project/cpdlab/Databases/oncotator_db/oncotator_v1_ds_April052016'
+mills_gold='/project/cpdlab/Databases/indels/Mills_and_1000G_gold_standard.indels.ucsc.hg19.sites.vcf'
+db_cosmic='/project/cpdlab/Databases/cosmic/cosmic_v67.hg19.vcf'
+gatk_indels='/project/cpdlab/Databases/GATK/bundle/2.8/hg19/1000G_phase1.indels.hg19.sites.vcf'
+gatk_dbsnp='/project/cpdlab/Databases/GATK/bundle/2.8/hg19/dbsnp_138.hg19.vcf'
 
 ## Languages
 # Java
@@ -64,7 +67,7 @@ snpeff_conf='/project/cpdlab/Tools/snpEff/4.1l/snpEff.config'
 
 #custom parsers
 coverage_calc='/project/cpdlab/Scripts/SolidV2/solidv2_v1.2/methods/coverage_summary.py'
-onco_parse='/project/cpdlab/Scripts/SolidV2/solidv2_v1.2/methods/onco_parse.py'
+onco_parse='/project/cpdlab/Scripts/SolidV2/solidv2_v1.2/methods/onco_parse.exome.py'
 sample_stats='/project/cpdlab/Scripts/SolidV2/solidv2_v1.2/methods/sample_stat.py'
 amp_calc='/project/cpdlab/Scripts/SolidV2/solidv2_v1.2/methods/amp_calc.py'
 super_parse='/project/cpdlab/Scripts/SolidV2/solidv2_v1.2/methods/super_parse.py'
@@ -83,6 +86,11 @@ tmp=${out_dir}/tmp
 
 mkdir ${out_dir}
 cd ${out_dir}
+
+#get fastq naming properties
+FW=$(basename $read1 ".fastq.gz")
+BW=$(basename $read2 ".fastq.gz")
+read_index="$(echo ${read1} | cut -d '_' -f2)"
 
 cpu=24
 mem=72
@@ -116,10 +124,10 @@ ${samtools} view -Su ${out_sam} | ${samtools} sort -m 30000000000 - -o ${out_bam
 
 dedup_out=${B}.nodup.bam
 dedup_fix_out=${B}.nodup.fix.bam
-dedup_out_sort=${B}.nodup.srt.bam
+dedup_fix_sort=${B}.nodup.fix.srt.bam
 dup_file_qc=${B}.dup.qc
 dedup_out_stat=${B}.nodup.stat
-${java8} -Xmx${mem}g -jar ${picard}/picard.jar MarkDuplicates TMP_DIR=${tmp} M=${dup_file_qc} I=${out_bam} O=${dedup_out} REMOVE_DUPLICATES=true VALIDATION_STRINGENCY=LENIENT
+${java8} -Xmx${mem}g -jar ${picard}/picard.jar MarkDuplicates TMP_DIR=${tmp} M=${dup_file_qc} I=${out_bam} O=${dedup_out}  REMOVE_DUPLICATES=true VALIDATION_STRINGENCY=LENIENT
 
 ## fix the bam file ##
 ${java8} -Xmx${mem}g -jar ${picard}/picard.jar AddOrReplaceReadGroups TMP_DIR=${tmp} I=${dedup_out} O=${dedup_fix_out} RGID="exome-seq" RGLB=${B} RGPL=Illumina RGPU=${read_index} RGSM=${B}
@@ -132,6 +140,8 @@ ${samtools} flagstat ${dedup_fix_sort} > ${dedup_out_stat}
 
 ############################################################################
 
+dedup_fix_sort_vld=${B}.nodup.fix.srt.vld.bam
+
 ${java8} -Xmx${mem}g -jar ${picard}/picard.jar ValidateSamFile I=${dedup_fix_sort} O=${dedup_fix_sort_vld}
 
 ############################################################################
@@ -139,7 +149,7 @@ ${java8} -Xmx${mem}g -jar ${picard}/picard.jar ValidateSamFile I=${dedup_fix_sor
 dedup_fix_clean=${B}.nodup.fix.clean.bam
 dedup_fix_clean_sort=${B}.nodup.fix.clean.srt.bam
 
-${java8} -Xmx${mem}g -Djava.io.tmpdir=${tmp} -jar ${GATK2} -T PrintReads -I ${dedup_fix_sort} -o ${dedup_fix_clean} -R ${db_fa} -nct ${cpu} -L ${amplicon_bed}
+${java8} -Xmx${mem}g -Djava.io.tmpdir=${tmp} -jar ${GATK2} -T PrintReads -I ${dedup_fix_sort} -o ${dedup_fix_clean} -R ${db_fa} -nct ${cpu} -L ${target_bed}
 
 ${samtools} sort -m 32000000000 ${dedup_fix_clean} -o ${dedup_fix_clean_sort}
 ${samtools} index ${dedup_fix_clean_sort}
@@ -150,11 +160,22 @@ realigned_bam=${B}.realign.bam
 realigned_bam_sort=${B}.realign.srt.bam
 
 # Realignment target creator
-${java8} -Xmx${mem}g -Djava.io.tmpdir=${tmp} -jar ${GATK2} -T RealignerTargetCreator -R ${db_fa} -I ${dedup_fix_clean_sort} -o ${realign_intv} -L ${target_bed} -known /project/cpdlab/ashkan/muTect/Mills_and_1000G_gold_standard.indels.ucsc.hg19.sites.vcf -known /project/cpdlab/Databases/GATK/bundle/2.8/hg19/1000G_phase1.indels.hg19.sites.vcf
+${java8} -Xmx${mem}g -Djava.io.tmpdir=${tmp} -jar ${GATK2} -T RealignerTargetCreator -R ${db_fa} -I ${dedup_fix_clean_sort} -o ${realign_intv} -L ${target_bed} -known ${mills_gold} -known ${gatk_indels}
 
+# realignment
+${java8} -Xmx${mem}g -Djava.io.tmpdir=${tmp} -jar ${GATK2} -T IndelRealigner -R ${db_fa} -L ${target_bed} -I ${dedup_fix_clean_sort} -known ${mills_gold} -known ${gatk_indels} -targetIntervals ${realign_intv} -o ${realigned_bam}
+
+${samtools} sort -m 32000000000 ${realigned_bam} -o ${realigned_bam_sort}
+${samtools} index ${realigned_bam_sort}
+
+################################## Base Recallibration #################################
+
+recal_table=${B}.grp
+recal_bam=${B}.realign.recal.bam
+recal_sort_bam=${B}.realign.recal.srt.bam
 after_recal_table=${B}.after_recal.grp
 recal_plot=${B}_recal.pdf
-${java8} -Xmx${mem}g -Djava.io.tmpdir=${tmp} -jar ${GATK2} -T BaseRecalibrator -R ${db_fa} -nct ${cpu} -knownSites /project/cpdlab/ashkan/muTect/Mills_and_1000G_gold_standard.indels.ucsc.hg19.sites.vcf -knownSites /project/cpdlab/Databases/GATK/bundle/2.8/hg19/1000G_phase1.indels.hg19.sites.vcf -knownSites /project/cpdlab/Databases/GATK/bundle/2.8/hg19/dbsnp_138.hg19.vcf -L ${target_bed} -I ${realigned_bam_sort} -o ${recal_table}
+${java8} -Xmx${mem}g -Djava.io.tmpdir=${tmp} -jar ${GATK2} -T BaseRecalibrator -R ${db_fa} -nct ${cpu} -knownSites ${mills_gold} -knownSites ${gatk_indels} -knownSites ${gatk_dbsnp} -L ${target_bed} -I ${realigned_bam_sort} -o ${recal_table}
 
 ${java8} -Xmx${mem}g -Djava.io.tmpdir=${tmp} -jar ${GATK2} -T PrintReads -R ${db_fa} -L ${target_bed} -nct ${cpu} -I ${realigned_bam_sort} -BQSR ${recal_table} -o ${recal_bam}
 
@@ -163,10 +184,9 @@ ${samtools} index ${recal_sort_bam}
 
 # plot recallibration effect
 
-${java8} -Xmx${mem}g -Djava.io.tmpdir=${tmp} -jar ${GATK2} -T BaseRecalibrator -R ${db_fa} -nct ${cpu} -knownSites /project/cpdlab/ashkan/muTect/Mills_and_1000G_gold_standard.indels.ucsc.hg19.sites.vcf -knownSites /project/cpdlab/Databases/GATK/bundle/2.8/hg19/1000G_phase1.indels.hg19.sites.vcf -knownSites /project/cpdlab/Databases/GATK/bundle/2.8/hg19/dbsnp_138.hg19.vcf -L ${target_bed} -I ${realigned_bam_sort} -BQSR ${recal_table} -o ${after_recal_table}
+${java8} -Xmx${mem}g -Djava.io.tmpdir=${tmp} -jar ${GATK2} -T BaseRecalibrator -R ${db_fa} -nct ${cpu} -knownSites ${mills_gold} -knownSites ${gatk_indels} -knownSites ${gatk_dbsnp} -L ${target_bed} -I ${realigned_bam_sort} -BQSR ${recal_table} -o ${after_recal_table}
 
 ${java8} -Xmx${mem}g -Djava.io.tmpdir=${tmp} -jar ${GATK2} -T AnalyzeCovariates -R ${db_fa} -before ${recal_table} -after ${after_recal_table} -plots ${recal_plot}
-
 ################################# rename file #######################################
 final_bam=${B}_final.bam
 final_bam_stat=${B}_final.stat
@@ -187,7 +207,7 @@ python ${coverage_calc} ${target_depth_out}
 mutect_vcf=${B}.mutect.vcf
 mutect_vcf_gz=${B}.mutect.vcf.gz
 
-${java8} -Xmx${mem}g -Djava.io.tmpdir=${tmp} -jar ${GATK2} -T MuTect2 -R ${db_fa} -I:tumor ${final_bam} --dbsnp /project/cpdlab/Databases/GATK/bundle/2.8/hg19/dbsnp_138.hg19.vcf --cosmic /project/cpdlab/ashkan/muTect/cosmic_v67.hg19.vcf -L ${target_bed} -o ${mutect_vcf}
+${java8} -Xmx${mem}g -Djava.io.tmpdir=${tmp} -jar ${GATK2} -T MuTect2 -R ${db_fa} -I:tumor ${final_bam} --dbsnp ${gatk_dbsnp} --cosmic ${db_cosmic} -L ${target_bed} -o ${mutect_vcf}
 
 sed -i -e 's/##fileformat=VCFv4.2/##fileformat=VCF4.1/g' ${mutect_vcf}
 sed -i '/PASS\|##\|#/!d' ${mutect_vcf}
@@ -219,7 +239,7 @@ ${java7} -jar ${varscan2} mpileup2indel ${final_pile} --output-vcf 1 --p-value 0
 #post call you need to combine/sort/replace sample column header in vcf
 ${vcftools}vcf-concat ${varscan2_snp_vcf} ${varscan2_indel_vcf} > ${varscan2_combined_vcf}
 cat ${varscan2_combined_vcf}|${vcftools}vcf-sort -c ${varscan2_combined_vcf} > ${varscan2_combined_sort_vcf}
-sed -i -e 's/Sample1/'${SampleName}'/g' ${varscan2_combined_sort_vcf}
+sed -i -e 's/Sample1/'${B}'/g' ${varscan2_combined_sort_vcf}
 ${bgzip}/bgzip -c ${varscan2_combined_sort_vcf} > ${varscan2_combined_sort_vcf_gz}
 ${tabix}/tabix -p vcf ${varscan2_combined_sort_vcf_gz}
 
@@ -229,7 +249,7 @@ vardict_sort_vcf=${B}.vardict_sort.vcf
 vardict_sort_vcf_gz=${B}.vardict_sort.vcf.gz
 
 #turn off hex filtering, turn off read2 requirments, quality score 15, #of reads for strand bias
-${vardict}vardict -F 0 -r 2 -B 2 -q 15 -G ${db_fa} -f 0.01 -N ${SampleName} -b ${final_bam} -c 1 -S 2 -E 3 -g 4 ${target_bed} | ${vardict}teststrandbias.R | ${vardict}var2vcf_valid.pl -N ${SampleName} -E -f 0.01 > ${vardict_vcf}
+${vardict}vardict -F 0 -r 2 -B 2 -q 15 -G ${db_fa} -f 0.01 -N ${B} -b ${final_bam} -c 1 -S 2 -E 3 -g 4 ${target_bed} | ${vardict}teststrandbias.R | ${vardict}var2vcf_valid.pl -N ${B} -E -f 0.01 > ${vardict_vcf}
 
 ${vcftools}./vcf-sort -c ${vardict_vcf} > ${vardict_sort_vcf}
 ${bgzip}/bgzip -c ${vardict_sort_vcf} > ${vardict_sort_vcf_gz}
@@ -256,9 +276,9 @@ ${tabix}/tabix -p vcf ${consensus_split_vcf_gz}
 scalpel_vcf=${B}.scalpel.variants.vcf
 scalpel_vcf_gz=${B}.scalpel.variants.vcf.gz
 
-${scalpel}/./scalpel-discovery --single --bam ${final_bam} --bed ${target_bed} --ref ${db_fa} --format vcf --dir ${out_dir} --numprocs 24
-mv variants.indel.vcf ${scalpel_vcf}
-sed -i -e 's/sample/'${SampleName}'/g' ${scalpel_vcf}
+#${scalpel}/./scalpel-discovery --single --bam ${final_bam} --bed ${target_bed} --ref ${db_fa} --format vcf --dir ${out_dir} --numprocs 24
+cp variants.indel.vcf ${scalpel_vcf}
+sed -i -e 's/sample/'${B}'/g' ${scalpel_vcf}
 ${bgzip}/bgzip -c ${scalpel_vcf} > ${scalpel_vcf_gz}
 ${tabix}/tabix -p vcf ${scalpel_vcf_gz}
 
@@ -280,7 +300,7 @@ pindel_homopolymer_filt=${B}.filtered.pindel.vcf
 pindel_homopolymer_filt_parsed=${B}.filtered.pindel.parsed.vcf
 pindel_homopolymer_filt_parsed_gz=${B}.filtered.pindel.parsed.vcf.gz
 
-echo -e ${final_bam}'\t'200'\t'${B} > ${pindel_txt}
+#echo -e ${final_bam}'\t'200'\t'${B} > ${pindel_txt}
 ${pindel}/./pindel -j ${target_bed} -r false -t false -M 5 -A 20 -E 0.90 -f ${db_fa} -i ${pindel_txt} -o ${B}.pindel.out
 ${pindel}/./pindel2vcf -P ${pindel_out} -r ${db_fa} -R ucsc.hg19 -d 2017 -v ${pindel_vcf}
 
