@@ -1,2 +1,2 @@
 # cpdUpenn
-Pleace all external server scripts for the cpd "DEMUX" server here
+Pleace all scripts associated with ArcherDX analysis here
