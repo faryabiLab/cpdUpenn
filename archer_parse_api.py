@@ -258,17 +258,15 @@ def main():
     #Take in arguements via Job Hook or User Input
     parser = ArgumentParser(description='Summarize Archer Transolocation Results\n' + 
                                 'for the Center of Personalized Diagnostics FileMaker Database\n')
-    parser.add_argument("-d", "--job_dir_path", required=True, help="Job directory path")
     parser.add_argument("-j", "--job_id", required=True, help="Job ID")
     args = parser.parse_args()
     
     #hardcoded output root dir
     archer_dir = '/PathCPD/FromHPC/Archer/'
-    job_dir_path = args.job_dir_path
     job_id = args.job_id
 
-    stats_file = os.path.join(archer_dir, job_dir_path, job_id + '_RunStatsFinal.txt')
-    variants_file = os.path.join(archer_dir, job_dir_path, job_id + '_Run_masterVarFinal.txt')
+    stats_file = os.path.join(archer_dir, job_id + '_RunStatsFinal.txt')
+    variants_file = os.path.join(archer_dir, job_id + '_Run_masterVarFinal.txt')
     
     #generate header files
     print_headers(stats_file, variants_file)
