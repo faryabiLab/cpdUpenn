@@ -265,8 +265,8 @@ def main():
     archer_dir = '/PathCPD/FromHPC/Archer/'
     job_id = args.job_id
 
-    stats_file = os.path.join(archer_dir, job_id + '_RunStatsFinal.txt')
-    variants_file = os.path.join(archer_dir, job_id + '_Run_masterVarFinal.txt')
+    stats_file = os.path.join(archer_dir, job_id, job_id + '_RunStatsFinal.txt')
+    variants_file = os.path.join(archer_dir, job_id, job_id + '_Run_masterVarFinal.txt')
     
     #generate header files
     print_headers(stats_file, variants_file)
