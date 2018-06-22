@@ -1,9 +1,5 @@
 # cpdUpenn
-CPD codes
+Lymphoma (6/22/2018)
 
-Each production has a dedicated branch
-  -development branches should be merged into the dedicated branch
-  
-When deprecating a pipeline
-  -commit the entire pipeline(code and supplemental files, no programs)
-  -remove the pipeline from its production branch
+Backup of scripts necessary to run BIoinformatics portion of Lymphoma panel.
+- Refer to Lymphoma Bioinformatics SOP on Paradigm for defailed instructions
