@@ -65,43 +65,44 @@ sed -i 's/TSCA/LYMPH/g' SampleSheet.csv AmpliconCoverage_M1.tsv AmpliconCoverage
 
 for line in $(ls *.bam | sed 's/\..*//' | sort -t _ -u -k 1,1 -k 2.2n) # sorts by sample, then by SampleSheet position (A always comes first)
 do
-  cd FASTQs/
-  total_reads=$(($(zcat $line"_L001_R1_001".fastq.gz | echo $((`wc -l`/4))) + $(zcat $line"_L001_R2_001".fastq.gz | echo $((`wc -l`/4))))) # manual read count
-  cd ..
+  total_reads=$(samtools view -c $line.bam)
+  #cd FASTQs/
+  #total_reads=$(($(zcat $line"_L001_R1_001".fastq.gz | echo $((`wc -l`/4))) + $(zcat $line"_L001_R2_001".fastq.gz | echo $((`wc -l`/4))))) # manual read count
+  #cd ..
   total_aligned_reads="NA"
   per_lost="NA"
   mapped_reads=$(samtools view -c -F 260 $line.bam)
   per_mapped=$(echo "scale=4; ($mapped_reads/$total_reads)*100" | bc)
-  true_name=`cut -d'_' -f1 <<< $line` # below line replaced, also make sure SS has "-A" instead of "_A"
-  #true_name=`cut -d'_' -f1 <<< $line | sed 's/-/_/g'` # Sample name value in SampleSheet
+  true_name=`cut -d'_' -f1 <<< $line | sed 's/-/_/g'` # Sample name value in SampleSheet
   # Finds full sample ID by matching sample name and manifest
   name=$(awk -v var1=$true_name 'BEGIN {FS=","} $2==var1' SampleSheet.csv | awk -v var2=${array[count]} 'BEGIN {FS=","} $9==var2 {print $1}')
   echo "Collecting statistics for "$name" ("${array[count]}")"
     
-  if [[ ${array[count]} == A ]];
-  then
-    sum=0 
-    reads1=$(cut AmpliconCoverage_M1.tsv -f `head -1 AmpliconCoverage_M1.tsv | tr "\t" "\n" | grep -n "^${name}"'$' | cut -f 1 -d :`)
-    for num in ${reads1};
-    do
-      sum=$((sum+num))
-    done
-  fi
+  #if [[ ${array[count]} == A ]];
+  #then
+  #  sum=0 
+  #  reads1=$(cut AmpliconCoverage_M1.tsv -f `head -1 AmpliconCoverage_M1.tsv | tr "\t" "\n" | grep -n "^${true_name}A"'$' | cut -f 1 -d :`)
+  #  for num in ${reads1};
+  #  do
+  #    sum=$((sum+num))
+  #  done
+  #fi
   
-  if [[ ${array[count]} == B ]];
-  then
-    sum=0
-    reads2=$(cut AmpliconCoverage_M2.tsv -f `head -1 AmpliconCoverage_M2.tsv | tr "\t" "\n" | grep -n "^${name}"'$' | cut -f 1 -d :`)
-    for num in ${reads2};
-    do
-      sum=$((sum+num))
-    done
-  fi
-  sum_reads=$sum
+  #if [[ ${array[count]} == B ]];
+  #then
+  #  sum=0
+  #  reads2=$(cut AmpliconCoverage_M2.tsv -f `head -1 AmpliconCoverage_M2.tsv | tr "\t" "\n" | grep -n "^${true_name}B"'$' | cut -f 1 -d :`)
+  #  for num in ${reads2};
+  #  do
+  #    sum=$((sum+num))
+  #  done
+  #fi
+  #sum_reads=$sum
 
   on_target_reads="NA"
   per_on_target="NA"
-  qual_filter_reads=$sum_reads
+  #qual_filter_reads=$sum_reads
+  qual_filter_reads=$(samtools flagstat $line.bam | awk 'NR==10 {print $1}')
   per_after_qual=$(echo "scale=4; ($qual_filter_reads/$mapped_reads)*100" | bc)
   per_usable=$(echo "scale=4; ($qual_filter_reads/$total_reads)*100" | bc)
  
