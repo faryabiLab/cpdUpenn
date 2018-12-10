@@ -6,6 +6,8 @@ samplesheet=$2
 
 mkdir ${out_dir}
 
+
+cp ${run_dir}/${samplesheet} ${run_dir}/Data/Intensities/BaseCalls/
 mv ${run_dir}/Data/Intensities/BaseCalls/${samplesheet} ${run_dir}/Data/Intensities/BaseCalls/${samplesheet}.tmp
 sed -i 1,18d ${run_dir}/Data/Intensities/BaseCalls/${samplesheet}.tmp
 awk -F ',' 'BEGIN{OFS=",";}{NR>1(gsub("_","-",$3))}1' ${run_dir}/Data/Intensities/BaseCalls/${samplesheet}.tmp > ${run_dir}/Data/Intensities/BaseCalls/${samplesheet}.tmp2
@@ -38,3 +40,7 @@ mkdir /PathCPD/FromHPC/HiSeqRun/ARCHER_fastqs/${project}
 scp ${out_dir}/Unaligned/${project}/*/*_R1.fastq.gz /PathCPD/FromHPC/HiSeqRun/ARCHER_fastqs/${project}/
 scp ${out_dir}/Unaligned/${project}/*/*_R2.fastq.gz /PathCPD/FromHPC/HiSeqRun/ARCHER_fastqs/${project}/
 scp ${out_dir}/Unaligned/${project}/${project}_read_counts.txt /PathCPD/FromHPC/HiSeqRun/ARCHER_fastqs/${project}/
+
+rsync -a --include '*.R*.fastq.gz' --include='SampleSheet.csv' --include '*/' --exclude='*' ${project_dir} ${archive_dir}
+tar --remove-files -czvf ${project_dir}_fastq_archive.tar.gz -C ${archive_dir} ${project_dir}
+
