@@ -1,9 +1,6 @@
 # cpdUpenn
-CPD codes
+SWIFT/PPPv2 (3/29/2018)
 
-Each production has a dedicated branch
-  -development branches should be merged into the dedicated branch
-  
-When deprecating a pipeline
-  -commit the entire pipeline(code and supplemental files, no programs)
-  -remove the pipeline from its production branch
+Backup of scripts necessary to run Bioinformatics portion of Swift Biosciences' Accel-Amplicon™ 56G Oncology Panel v2.
+
+Refer to PPPv2 Bioinformatics SOP on Paradigm for detailed instructions.
