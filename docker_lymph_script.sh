@@ -31,6 +31,7 @@ nohup bcl2fastq --runfolder-dir /PathCPD/illumina/SeqOut/${SeqRun} --output-dir 
 #done
 
 cp /home/cpdlab/SampleSheet_base.csv /data1/HiSeqRun/Lymphoma/AmpliconDS/SampleSheet_base.csv
+cd /data1/HiSeqRun/Lymphoma/AmpliconDS/
 sed -i "s/180475/${seq_id}/g" SampleSheet_base.csv
 
 cp /PathCPD/illumina/SeqOut/${SeqRun}/SampleSheet.csv /data1/HiSeqRun/Lymphoma/AmpliconDS/SampleSheet_demux.csv
@@ -55,8 +56,6 @@ awk 'BEGIN { FS="," } ; $7!=2' SampleSheet_meat.csv >> SampleSheet_final.csv
 
 mv SampleSheet_final.csv SampleSheet.csv
 
-### MODIFY THE SAMPLESHEET TO SUIT THE DOCKER IMAGE FORMAT ###
-
 # Window #1 | Start up Docker daemon on Isilon
 #sudo su root
 #cd /data1/var/lib/docker/
@@ -66,7 +65,7 @@ mv SampleSheet_final.csv SampleSheet.csv
 #systemctl stop docker
 #dockerd -g /data1/var/lib/docker
 
-## Window #2 | Analysis step
+## Window #2 | Analysis steps
 cd /data1/HiSeqRun/Lymphoma
 cat ampliconds-1-2-1.tar | docker load
 docker run -v /data1/HiSeqRun/Lymphoma:/data -v /data1/HiSeqRun/Lymphoma/genomes:/genomes docker.illumina.com/arnoldliao/ampliconds-1-2-1 /opt/illumina/Isis/latest/Isis -r /data/AmpliconDS -a /data/AmpliconDS/Analysis -c 2
@@ -74,8 +73,7 @@ docker run -v /data1/HiSeqRun/Lymphoma:/data -v /data1/HiSeqRun/Lymphoma/genomes
 # Post-processing/move to HPC
 cd /data1/HiSeqRun/Lymphoma/AmpliconDS/Analysis
 mkdir genome_VCFs
-mv *genome.vcf.gz genome_VCFs/
-for file in *vcf.gz; do zcat $file > ${file%???}; done
+mv *genome.vcf genome_VCFs/
 
 rsync -a --include='*.vcf' --include='*AmpliconCoverage*' --include='*bam*' --exclude='*/' --exclude='*' . ${usr}@mercury.pmacs.upenn.edu:/project/cpdlab/Lymphoma/$SeqRun
 cd ../Data/Intensities/BaseCalls/
@@ -86,4 +84,6 @@ scp SampleSheet.csv ${usr}@mercury.pmacs.upenn.edu:/project/cpdlab/Lymphoma/$Seq
 #seq_id="SEQ-"`awk -F "," 'NR==4 {print $2}' SampleSheet.csv`
 seq_clean=$(echo $seq_id | sed "s///")
 
-echo "bsub -q cpd-dev sh docker_lymphoma_parse.sh $1 ${seq_clean}" | ssh ${usr}@consign.pmacs.upenn.edu "cat >> /project/cpdlab/Lymphoma/${seq_clean}_run_this.sh"
+echo "cd /project/cpdlab/Lymphoma/" | ssh ${usr}@consign.pmacs.upenn.edu "cat >> /project/cpdlab/Lymphoma/${seq_clean}_run_this.sh"
+echo "bsub -q cpd-dev -n 32 -M 50000 sh /project/cpdlab/Lymphoma/docker_lymphoma_parse.sh ${SeqRun} ${seq_clean}" | ssh ${usr}@consign.pmacs.upenn.edu "cat >> /project/cpdlab/Lymphoma/${seq_clean}_run_this.sh"
+ssh ${usr}@consign.pmacs.upenn.edu "sh /project/cpdlab/Lymphoma/${seq_clean}_run_this.sh"
